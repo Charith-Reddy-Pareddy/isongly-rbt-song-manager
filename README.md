@@ -2,6 +2,8 @@
 
 A song library backed by a from-scratch Red-Black Tree, exposed through a Spring Boot REST API and a React frontend (with the original text-based CLI kept alongside it).
 
+**Live:** [charith-reddy-pareddy.github.io/isongly-rbt-song-manager](https://charith-reddy-pareddy.github.io/isongly-rbt-song-manager/) (frontend on GitHub Pages, backend on Render's free tier — the API container spins down after inactivity, so the first request after a while can take ~30s to wake it up).
+
 Given a CSV of songs, you can:
 - look up songs by BPM range,
 - filter them to songs released after a given year (composable with the BPM range),
@@ -89,6 +91,11 @@ The frontend talks to `http://localhost:8080` by default; override with a `VITE_
 cd backend
 ./mvnw compile exec:java -Dexec.mainClass=com.isongly.cli.IsonglyCli
 ```
+
+## Deployment
+
+- **Frontend** — `.github/workflows/deploy-frontend.yml` builds `frontend/` with Vite and publishes it to GitHub Pages on every push to `main` that touches `frontend/**`. The `VITE_API_BASE_URL` repo variable is baked in at build time.
+- **Backend** — `render.yaml` at the repo root is a [Render Blueprint](https://render.com/docs/blueprint-spec): a Docker web service built from `backend/Dockerfile`, free plan, with `APP_CORS_ALLOWED_ORIGINS` set to the Pages origin. Connect it once via Render's dashboard (New + → Blueprint → select this repo); after that, Render redeploys automatically on every push to `main`.
 
 ## API
 

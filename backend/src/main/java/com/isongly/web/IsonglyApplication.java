@@ -46,12 +46,13 @@ public class IsonglyApplication {
   }
 
   @Bean
-  public WebMvcConfigurer corsConfigurer() {
+  public WebMvcConfigurer corsConfigurer(
+      @Value("${app.cors.allowed-origins}") String[] allowedOrigins) {
     return new WebMvcConfigurer() {
       @Override
       public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-            .allowedOrigins("http://localhost:5173")
+            .allowedOrigins(allowedOrigins)
             .allowedMethods("GET", "POST");
       }
     };

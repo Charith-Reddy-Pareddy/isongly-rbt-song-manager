@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: isongly-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: https://charith-reddy-pareddy.github.io
+    healthCheckPath: /api/songs/top-five
