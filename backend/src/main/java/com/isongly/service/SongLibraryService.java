@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
+import java.util.TreeSet;
 
 /**
  * Backend for the song library: loads songs from CSV into a sorted tree and
@@ -206,5 +207,61 @@ public class SongLibraryService implements BackendInterface {
       titles.add(song.getTitle());
     }
     return titles;
+  }
+
+  /**
+   * Free-text search over every loaded song's title/artist, optionally
+   * narrowed to one genre, sorted by the requested field. Unlike
+   * {@link #getRange}/{@link #setFilter}, this ignores the BPM range/year
+   * filter state entirely — it's a separate, stateless browsing query.
+   *
+   * @param query    case-insensitive substring matched against title or artist; blank/null matches everything
+   * @param genre    exact case-insensitive genre match, or null/blank for every genre
+   * @param sortBy   one of "title", "artist", "year", "bpm", "energy" (defaults to "title")
+   * @param sortDir  "asc" (default) or "desc"
+   */
+  public List<Song> search(String query, String genre, String sortBy, String sortDir) {
+    List<Song> results = new ArrayList<>();
+    if (songCollection == null) {
+      return results;
+    }
+    String normalizedQuery = query == null ? "" : query.trim().toLowerCase();
+    String normalizedGenre = (genre == null || genre.isBlank()) ? null : genre.trim();
+
+    for (Song song : songCollection) {
+      boolean matchesQuery = normalizedQuery.isEmpty()
+          || song.getTitle().toLowerCase().contains(normalizedQuery)
+          || song.getArtist().toLowerCase().contains(normalizedQuery);
+      boolean matchesGenre = normalizedGenre == null || normalizedGenre.equalsIgnoreCase(song.getGenre());
+      if (matchesQuery && matchesGenre) {
+        results.add(song);
+      }
+    }
+    results.sort(sortComparator(sortBy, sortDir));
+    return results;
+  }
+
+  /** Every distinct genre among loaded songs, alphabetically, case-insensitively de-duplicated. */
+  public List<String> getGenres() {
+    TreeSet<String> genres = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    if (songCollection != null) {
+      for (Song song : songCollection) {
+        if (song.getGenre() != null && !song.getGenre().isBlank()) {
+          genres.add(song.getGenre());
+        }
+      }
+    }
+    return new ArrayList<>(genres);
+  }
+
+  private Comparator<Song> sortComparator(String sortBy, String sortDir) {
+    Comparator<Song> comparator = switch (sortBy == null ? "title" : sortBy.toLowerCase()) {
+      case "bpm" -> Comparator.comparingInt(Song::getBPM);
+      case "energy" -> Comparator.comparingInt(Song::getEnergy);
+      case "year" -> Comparator.comparingInt(Song::getYear);
+      case "artist" -> Comparator.comparing(Song::getArtist, String.CASE_INSENSITIVE_ORDER);
+      default -> Comparator.comparing(Song::getTitle, String.CASE_INSENSITIVE_ORDER);
+    };
+    return "desc".equalsIgnoreCase(sortDir) ? comparator.reversed() : comparator;
   }
 }

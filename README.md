@@ -7,7 +7,8 @@ A song library backed by a from-scratch Red-Black Tree, exposed through a Spring
 Given a CSV of songs, you can:
 - look up songs by BPM range,
 - filter them to songs released after a given year (composable with the BPM range),
-- and pull the five most energetic songs matching the current range/filter.
+- pull the five most energetic songs matching the current range/filter,
+- and, in the frontend's **Browse & Search** tab, live-search by title/artist, filter by genre, and sort any column — independent of the range/filter state above.
 
 ## Origin
 
@@ -38,6 +39,8 @@ flowchart LR
 - **`web`** — `SongController` exposes that service over REST; `IsonglyApplication` is the Spring Boot entry point and loads the bundled sample dataset on startup.
 - **`cli`** — `IsonglyCli` / `ConsoleFrontend` is the original text menu (`L`/`G`/`F`/`D`/`Q`), unchanged in behavior, now driven by the same `SongLibraryService`.
 
+The frontend has two tabs: **Browse & Search** (`search`/`genres` endpoints — a stateless query over the whole library, unaffected by the range/filter below) and **Original Assignment API** (`range`/`filter`/`top-five` — the exact stateful query model the CS400 spec required, where a BPM range set by one call persists for later calls until changed).
+
 ## Notable fixes from the original coursework version
 
 While restructuring, a few real bugs surfaced (all now covered by regression tests):
@@ -61,7 +64,9 @@ isongly-rbt-song-manager/
 │   ├── src/main/resources/songs.csv   bundled sample dataset (600 songs)
 │   └── src/test/java/...              JUnit 5 tests (tree, service, CLI, REST)
 └── frontend/    React + Vite
-    └── src/     App.jsx, api.js, styles
+    └── src/
+        ├── App.jsx, api.js, index.css, App.css
+        └── components/   BrowsePanel, SpecDemoPanel, SongTable, StatBar
 ```
 
 ## Running it
@@ -106,6 +111,8 @@ cd backend
 | GET    | `/api/songs/top-five`    | up to five most energetic songs in the current range/filter        |
 | POST   | `/api/songs/reset`       | clears the BPM range and year filter                               |
 | POST   | `/api/songs/upload`      | multipart CSV upload, replaces the loaded library                  |
+| GET    | `/api/songs/search`      | `?q=&genre=&sortBy=&sortDir=` — free-text search + sort, ignores range/filter state |
+| GET    | `/api/songs/genres`      | every distinct genre in the loaded library, alphabetically         |
 
 ## Tech
 

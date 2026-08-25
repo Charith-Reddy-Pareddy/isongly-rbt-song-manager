@@ -59,4 +59,37 @@ class SongControllerIntegrationTest {
     SongDto[] songs = restTemplate.postForObject(url("/api/songs/reset"), null, SongDto[].class);
     assertThat(songs.length).isEqualTo(600);
   }
+
+  @Test
+  void searchMatchesOnTitleOrArtistAndIgnoresPriorRangeOrFilterState() {
+    restTemplate.getForObject(url("/api/songs/range?min=100&max=110"), SongDto[].class);
+
+    SongDto[] songs = restTemplate.getForObject(url("/api/songs/search?q=bieber"), SongDto[].class);
+
+    assertThat(songs).isNotEmpty();
+    for (SongDto song : songs) {
+      assertThat((song.title() + " " + song.artist()).toLowerCase()).contains("bieber");
+    }
+  }
+
+  @Test
+  void searchSortsByRequestedFieldDescending() {
+    SongDto[] songs = restTemplate.getForObject(url("/api/songs/search?sortBy=bpm&sortDir=desc"), SongDto[].class);
+
+    assertThat(songs.length).isEqualTo(600);
+    for (int i = 1; i < songs.length; i++) {
+      assertThat(songs[i - 1].bpm()).isGreaterThanOrEqualTo(songs[i].bpm());
+    }
+  }
+
+  @Test
+  void genresReturnsNonEmptySortedDistinctList() {
+    String[] genres = restTemplate.getForObject(url("/api/songs/genres"), String[].class);
+
+    assertThat(genres).isNotEmpty();
+    assertThat(genres).doesNotHaveDuplicates();
+    String[] sorted = genres.clone();
+    java.util.Arrays.sort(sorted, String.CASE_INSENSITIVE_ORDER);
+    assertThat(genres).isEqualTo(sorted);
+  }
 }

@@ -47,6 +47,22 @@ public class SongController {
     return songLibraryService.topFiveSongs().stream().map(SongDto::from).toList();
   }
 
+  /** Free-text search over title/artist, optionally narrowed by genre and sorted — independent of range/filter state. */
+  @GetMapping("/search")
+  public List<SongDto> search(
+      @RequestParam(required = false, defaultValue = "") String q,
+      @RequestParam(required = false) String genre,
+      @RequestParam(required = false, defaultValue = "title") String sortBy,
+      @RequestParam(required = false, defaultValue = "asc") String sortDir) {
+    return songLibraryService.search(q, genre, sortBy, sortDir).stream().map(SongDto::from).toList();
+  }
+
+  /** Every distinct genre among the currently loaded songs, for populating a filter dropdown. */
+  @GetMapping("/genres")
+  public List<String> genres() {
+    return songLibraryService.getGenres();
+  }
+
   /** Clears the BPM range and year filter, returning every loaded song. */
   @PostMapping("/reset")
   public List<SongDto> reset() {

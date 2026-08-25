@@ -45,14 +45,19 @@ public class IsonglyApplication {
     };
   }
 
+  /**
+   * Origins may include glob patterns (e.g. "http://localhost:*") so local
+   * dev keeps working no matter which port Vite ends up on; the deployed
+   * frontend origin is set to an exact value via APP_CORS_ALLOWED_ORIGINS.
+   */
   @Bean
   public WebMvcConfigurer corsConfigurer(
-      @Value("${app.cors.allowed-origins}") String[] allowedOrigins) {
+      @Value("${app.cors.allowed-origins}") String[] allowedOriginPatterns) {
     return new WebMvcConfigurer() {
       @Override
       public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-            .allowedOrigins(allowedOrigins)
+            .allowedOriginPatterns(allowedOriginPatterns)
             .allowedMethods("GET", "POST");
       }
     };

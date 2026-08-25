@@ -115,4 +115,53 @@ class SongLibraryServiceTest {
     SongLibraryService backend = new SongLibraryService(new IterableRedBlackTree<>());
     assertThrows(IOException.class, () -> backend.readData(new StringReader("")));
   }
+
+  @Test
+  void searchMatchesTitleOrArtistCaseInsensitively() {
+    SongLibraryService backend = new SongLibraryService(new SongTreePlaceholder());
+    assertEquals(List.of("Cake By The Ocean"),
+        titlesOf(backend.search("cake", null, "title", "asc")));
+    assertEquals(List.of("Cake By The Ocean"),
+        titlesOf(backend.search("dnce", null, "title", "asc"))); // matches artist "DNCE"
+  }
+
+  @Test
+  void searchWithBlankQueryMatchesEverySong() {
+    SongLibraryService backend = new SongLibraryService(new SongTreePlaceholder());
+    assertEquals(3, backend.search("", null, "title", "asc").size());
+  }
+
+  @Test
+  void searchFiltersByExactGenreCaseInsensitively() {
+    SongLibraryService backend = new SongLibraryService(new SongTreePlaceholder());
+    assertEquals(Arrays.asList("BO$$", "Cake By The Ocean"),
+        titlesOf(backend.search("", "Dance Pop", "title", "asc")));
+  }
+
+  @Test
+  void searchSortsByRequestedFieldAndDirection() {
+    SongLibraryService backend = new SongLibraryService(new SongTreePlaceholder());
+    assertEquals(Arrays.asList("A L I E N S", "Cake By The Ocean", "BO$$"),
+        titlesOf(backend.search("", null, "bpm", "desc")));
+  }
+
+  @Test
+  void searchIsIndependentOfBpmRangeAndYearFilterState() {
+    // Unlike getRange/setFilter, search() browses everything regardless of
+    // any range/filter previously set via the CLI-style query methods.
+    SongLibraryService backend = new SongLibraryService(new SongTreePlaceholder());
+    backend.getRange(140, 150);
+    backend.setFilter(2020);
+    assertEquals(3, backend.search("", null, "title", "asc").size());
+  }
+
+  @Test
+  void getGenresReturnsDistinctGenresAlphabetically() {
+    SongLibraryService backend = new SongLibraryService(new SongTreePlaceholder());
+    assertEquals(Arrays.asList("dance pop", "permanent wave"), backend.getGenres());
+  }
+
+  private List<String> titlesOf(List<Song> songs) {
+    return songs.stream().map(Song::getTitle).toList();
+  }
 }
