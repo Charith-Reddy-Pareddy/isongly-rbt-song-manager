@@ -117,6 +117,52 @@ class SongLibraryServiceTest {
   }
 
   @Test
+  void readDataThrowsCleanIOExceptionForRowWithTooFewColumns() {
+    // Regression test: a data row with fewer columns than the header used to
+    // throw an unhandled IndexOutOfBoundsException instead of a clean IOException.
+    String csv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live\nOnly Title,Only Artist\n";
+    SongLibraryService backend = new SongLibraryService(new IterableRedBlackTree<>());
+
+    IOException ex = assertThrows(IOException.class, () -> backend.readData(new StringReader(csv)));
+    assertTrue(ex.getMessage().contains("Line 2"));
+  }
+
+  @Test
+  void replaceDataPreservesExistingLibraryWhenNewCsvIsMalformed() throws IOException {
+    // Regression test: the upload endpoint used to clear() the library before
+    // parsing the new CSV, so a malformed upload wiped out everything that
+    // was previously loaded instead of leaving it in place.
+    String goodCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live\n"
+        + "Song One,Artist One,pop,2020,120,80,60,-5,10\n"
+        + "Song Two,Artist Two,pop,2021,110,70,50,-6,20\n";
+    String malformedCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live\nOnly Title,Only Artist\n";
+
+    SongLibraryService backend = new SongLibraryService(new IterableRedBlackTree<>());
+    backend.readData(new StringReader(goodCsv));
+    assertEquals(2, backend.getSongCollection().size());
+
+    assertThrows(IOException.class, () -> backend.replaceData(new StringReader(malformedCsv)));
+
+    assertEquals(2, backend.getSongCollection().size());
+  }
+
+  @Test
+  void replaceDataClearsOldLibraryWhenNewCsvIsValid() throws IOException {
+    String goodCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live\n"
+        + "Song One,Artist One,pop,2020,120,80,60,-5,10\n";
+    String replacementCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live\n"
+        + "New Song,New Artist,rock,2022,130,90,70,-4,30\n";
+
+    SongLibraryService backend = new SongLibraryService(new IterableRedBlackTree<>());
+    backend.readData(new StringReader(goodCsv));
+
+    backend.replaceData(new StringReader(replacementCsv));
+
+    assertEquals(1, backend.getSongCollection().size());
+    assertEquals("New Song", backend.getSongCollection().iterator().next().getTitle());
+  }
+
+  @Test
   void searchMatchesTitleOrArtistCaseInsensitively() {
     SongLibraryService backend = new SongLibraryService(new SongTreePlaceholder());
     assertEquals(List.of("Cake By The Ocean"),

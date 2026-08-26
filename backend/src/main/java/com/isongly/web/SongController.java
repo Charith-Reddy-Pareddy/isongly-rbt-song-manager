@@ -77,8 +77,7 @@ public class SongController {
       return ResponseEntity.badRequest().body("Uploaded file is empty.");
     }
     try (var reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8)) {
-      songLibraryService.clear();
-      songLibraryService.readData(reader);
+      songLibraryService.replaceData(reader);
       return ResponseEntity.ok(
           songLibraryService.getRangeAsSongs(null, null).stream().map(SongDto::from).toList());
     } catch (IOException e) {

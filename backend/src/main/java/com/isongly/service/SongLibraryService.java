@@ -61,29 +61,60 @@ public class SongLibraryService implements BackendInterface {
 
   /** Loads songs from CSV content read from an arbitrary Reader (e.g. a classpath resource or upload). */
   public void readData(Reader source) throws IOException {
+    for (Song song : parseSongs(source)) {
+      songCollection.insert(song);
+    }
+  }
+
+  /**
+   * Replaces the entire library with the songs parsed from source. Unlike
+   * {@link #readData(Reader)}, this is atomic: the CSV is fully parsed and
+   * validated before anything is cleared, so a malformed upload leaves the
+   * previously loaded library untouched instead of wiping it out.
+   *
+   * @throws IOException if the CSV can't be parsed; the existing library is left unchanged
+   */
+  public void replaceData(Reader source) throws IOException {
+    List<Song> songs = parseSongs(source);
+    clear();
+    for (Song song : songs) {
+      songCollection.insert(song);
+    }
+  }
+
+  /** Parses every row of a CSV into Song objects, without touching songCollection. */
+  private List<Song> parseSongs(Reader source) throws IOException {
+    List<Song> songs = new ArrayList<>();
     Scanner scanner = new Scanner(source);
     try {
       if (!scanner.hasNextLine()) {
         throw new IOException("CSV file is empty or not found.");
       }
       int[] indices = findColumnIndices(scanner.nextLine().split(","));
+      int lineNumber = 1;
       while (scanner.hasNextLine()) {
+        lineNumber++;
         List<String> fields = splitCsvLine(scanner.nextLine());
-        songCollection.insert(new Song(
-            fields.get(indices[0]),               // title
-            fields.get(indices[1]),                // artist
-            fields.get(indices[2]),                // genre
-            parseIntSafe(fields.get(indices[3])),  // year
-            parseIntSafe(fields.get(indices[4])),  // bpm
-            parseIntSafe(fields.get(indices[5])),  // energy
-            parseIntSafe(fields.get(indices[6])),  // danceability
-            parseIntSafe(fields.get(indices[7])),  // loudness
-            parseIntSafe(fields.get(indices[8]))   // liveness
-        ));
+        try {
+          songs.add(new Song(
+              fields.get(indices[0]),               // title
+              fields.get(indices[1]),                // artist
+              fields.get(indices[2]),                // genre
+              parseIntSafe(fields.get(indices[3])),  // year
+              parseIntSafe(fields.get(indices[4])),  // bpm
+              parseIntSafe(fields.get(indices[5])),  // energy
+              parseIntSafe(fields.get(indices[6])),  // danceability
+              parseIntSafe(fields.get(indices[7])),  // loudness
+              parseIntSafe(fields.get(indices[8]))   // liveness
+          ));
+        } catch (IndexOutOfBoundsException e) {
+          throw new IOException("Line " + lineNumber + " has fewer columns than the header.", e);
+        }
       }
     } finally {
       scanner.close();
     }
+    return songs;
   }
 
   private int parseIntSafe(String input) {
