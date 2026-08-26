@@ -117,6 +117,20 @@ class SongLibraryServiceTest {
   }
 
   @Test
+  void readDataThrowsIOExceptionWhenHeaderIsMissingARequiredColumn() {
+    // Regression test: a header missing a required column (here, "bpm") used
+    // to silently default that column's index to 0, so every song's BPM was
+    // read from the title column instead and silently parsed as 0 -- no
+    // exception, just corrupted data.
+    String csv = "title,artist,top genre,year,nrgy,dnce,dB,live\n" // no "bpm" column
+        + "Song One,Artist One,pop,2020,80,60,-5,10\n";
+    SongLibraryService backend = new SongLibraryService(new IterableRedBlackTree<>());
+
+    IOException ex = assertThrows(IOException.class, () -> backend.readData(new StringReader(csv)));
+    assertTrue(ex.getMessage().toLowerCase().contains("bpm"));
+  }
+
+  @Test
   void readDataThrowsCleanIOExceptionForRowWithTooFewColumns() {
     // Regression test: a data row with fewer columns than the header used to
     // throw an unhandled IndexOutOfBoundsException instead of a clean IOException.

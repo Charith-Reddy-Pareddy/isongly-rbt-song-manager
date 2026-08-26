@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
@@ -152,9 +153,17 @@ public class SongLibraryService implements BackendInterface {
     return fields;
   }
 
-  /** Maps each required column name to its position in the CSV header row. */
-  private int[] findColumnIndices(String[] headers) {
-    int[] indices = new int[9];
+  private static final String[] REQUIRED_COLUMNS =
+      {"title", "artist", "top genre", "year", "bpm", "nrgy", "dnce", "db", "live"};
+
+  /**
+   * Maps each required column name to its position in the CSV header row.
+   *
+   * @throws IOException if the header is missing one or more required columns
+   */
+  private int[] findColumnIndices(String[] headers) throws IOException {
+    int[] indices = new int[REQUIRED_COLUMNS.length];
+    Arrays.fill(indices, -1);
     for (int i = 0; i < headers.length; i++) {
       switch (headers[i].trim().toLowerCase()) {
         case "title" -> indices[0] = i;
@@ -168,6 +177,16 @@ public class SongLibraryService implements BackendInterface {
         case "live" -> indices[8] = i;
         default -> { /* ignore columns we don't need */ }
       }
+    }
+
+    List<String> missing = new ArrayList<>();
+    for (int i = 0; i < indices.length; i++) {
+      if (indices[i] == -1) {
+        missing.add(REQUIRED_COLUMNS[i]);
+      }
+    }
+    if (!missing.isEmpty()) {
+      throw new IOException("CSV header is missing required column(s): " + String.join(", ", missing));
     }
     return indices;
   }
