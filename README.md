@@ -1,5 +1,7 @@
 # iSongly
 
+[![CI](https://github.com/Charith-Reddy-Pareddy/isongly-rbt-song-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/Charith-Reddy-Pareddy/isongly-rbt-song-manager/actions/workflows/ci.yml)
+
 A song library backed by a from-scratch Red-Black Tree, exposed through a Spring Boot REST API and a React frontend (with the original text-based CLI kept alongside it).
 
 **Live:** [charith-reddy-pareddy.github.io/isongly-rbt-song-manager](https://charith-reddy-pareddy.github.io/isongly-rbt-song-manager/) (frontend on GitHub Pages, backend on Render's free tier — the API container spins down after inactivity, so the first request after a while can take ~30s to wake it up).
@@ -88,7 +90,7 @@ npm install
 npm run dev
 ```
 
-The frontend talks to `http://localhost:8080` by default; override with a `VITE_API_BASE_URL` env var if the backend runs elsewhere.
+The frontend talks to `http://localhost:8080` by default; override with a `VITE_API_BASE_URL` env var if the backend runs elsewhere. CORS on the backend accepts any `http://localhost:*` origin in dev, so this works regardless of which port Vite ends up on. Run `npm test` for the Vitest/Testing Library suite (component rendering, sort/search debounce and request-cancellation logic, URL state sync, API error handling).
 
 ### Original CLI
 
@@ -101,6 +103,7 @@ cd backend
 
 - **Frontend** — `.github/workflows/deploy-frontend.yml` builds `frontend/` with Vite and publishes it to GitHub Pages on every push to `main` that touches `frontend/**`. The `VITE_API_BASE_URL` repo variable is baked in at build time.
 - **Backend** — `render.yaml` at the repo root is a [Render Blueprint](https://render.com/docs/blueprint-spec): a Docker web service built from `backend/Dockerfile`, free plan, with `APP_CORS_ALLOWED_ORIGINS` set to the Pages origin. Connect it once via Render's dashboard (New + → Blueprint → select this repo); after that, Render redeploys automatically on every push to `main`.
+- **CI** — `.github/workflows/ci.yml` runs the full backend (`mvnw test`) and frontend (`npm test` + `npm run build`) suites on every push and pull request to `main`, independent of the deploy workflows above.
 
 ## API
 

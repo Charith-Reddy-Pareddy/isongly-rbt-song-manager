@@ -274,6 +274,11 @@ tbody tr:hover {
   color: var(--danger);
 }
 
+.empty-state button {
+  flex: none;
+  margin-top: 0.75rem;
+}
+
 .empty-state code {
   background: var(--surface-alt);
   padding: 0.15rem 0.4rem;

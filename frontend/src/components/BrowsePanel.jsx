@@ -3,12 +3,27 @@ import { search, getGenres } from '../api';
 import SongTable from './SongTable';
 import StatBar from './StatBar';
 
+const VALID_SORT_COLUMNS = new Set(['title', 'artist', 'genre', 'year', 'bpm', 'energy']);
+
+function readInitialState() {
+  const params = new URLSearchParams(window.location.search);
+  const sortBy = params.get('sortBy');
+  return {
+    query: params.get('q') ?? '',
+    genre: params.get('genre') ?? '',
+    sortBy: VALID_SORT_COLUMNS.has(sortBy) ? sortBy : 'title',
+    sortDir: params.get('sortDir') === 'desc' ? 'desc' : 'asc',
+  };
+}
+
 export default function BrowsePanel() {
-  const [query, setQuery] = useState('');
-  const [genre, setGenre] = useState('');
+  const [initial] = useState(readInitialState);
+  const [query, setQuery] = useState(initial.query);
+  const [genre, setGenre] = useState(initial.genre);
   const [genres, setGenres] = useState([]);
-  const [sortBy, setSortBy] = useState('title');
-  const [sortDir, setSortDir] = useState('asc');
+  const [sortBy, setSortBy] = useState(initial.sortBy);
+  const [sortDir, setSortDir] = useState(initial.sortDir);
+  const [retryToken, setRetryToken] = useState(0);
 
   const [songs, setSongs] = useState([]);
   const [status, setStatus] = useState('loading');
@@ -17,6 +32,19 @@ export default function BrowsePanel() {
   useEffect(() => {
     getGenres().then(setGenres).catch(() => {});
   }, []);
+
+  // Keep the URL in sync so the current search/filter/sort is bookmarkable,
+  // shareable, and survives a page refresh.
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (query) params.set('q', query);
+    if (genre) params.set('genre', genre);
+    if (sortBy !== 'title') params.set('sortBy', sortBy);
+    if (sortDir !== 'asc') params.set('sortDir', sortDir);
+    const queryString = params.toString();
+    const newUrl = window.location.pathname + (queryString ? `?${queryString}` : '');
+    window.history.replaceState(null, '', newUrl);
+  }, [query, genre, sortBy, sortDir]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -38,7 +66,7 @@ export default function BrowsePanel() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, genre, sortBy, sortDir]);
+  }, [query, genre, sortBy, sortDir, retryToken]);
 
   function handleSort(column) {
     if (column === sortBy) {
@@ -83,10 +111,15 @@ export default function BrowsePanel() {
         {status === 'loading' && songs.length === 0 ? (
           <p className="empty-state">Loading…</p>
         ) : status === 'error' ? (
-          <p className="empty-state error">
-            Could not reach the backend. Is it running at{' '}
-            <code>{import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'}</code>?
-          </p>
+          <div className="empty-state error">
+            <p>
+              Could not reach the backend. Is it running at{' '}
+              <code>{import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'}</code>?
+            </p>
+            <button type="button" className="secondary" onClick={() => setRetryToken((n) => n + 1)}>
+              Retry
+            </button>
+          </div>
         ) : (
           <>
             <StatBar songs={songs} />
