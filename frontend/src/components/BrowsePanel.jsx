@@ -84,10 +84,11 @@ export default function BrowsePanel() {
           type="search"
           className="search-input"
           placeholder="Search by title or artist…"
+          aria-label="Search by title or artist"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <select value={genre} onChange={(e) => setGenre(e.target.value)}>
+        <select aria-label="Filter by genre" value={genre} onChange={(e) => setGenre(e.target.value)}>
           <option value="">All genres</option>
           {genres.map((g) => (
             <option key={g} value={g}>

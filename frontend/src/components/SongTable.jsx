@@ -19,13 +19,18 @@ export default function SongTable({ songs, sortBy, sortDir, onSort }) {
 
   const sortable = Boolean(onSort);
 
+  function ariaSortFor(columnKey) {
+    if (!sortable || sortBy !== columnKey) return undefined;
+    return sortDir === 'asc' ? 'ascending' : 'descending';
+  }
+
   return (
     <div className="table-wrap">
       <table>
         <thead>
           <tr>
             {COLUMNS.map((col) => (
-              <th key={col.key}>
+              <th key={col.key} scope="col" aria-sort={ariaSortFor(col.key)}>
                 {sortable ? (
                   <button type="button" className="sort-header" onClick={() => onSort(col.key)}>
                     {col.label}

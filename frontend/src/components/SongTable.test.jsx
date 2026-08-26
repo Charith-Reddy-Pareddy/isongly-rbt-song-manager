@@ -46,4 +46,22 @@ describe('SongTable', () => {
     rerender(<SongTable songs={songs} sortBy="bpm" sortDir="desc" onSort={() => {}} />);
     expect(screen.getByRole('button', { name: /bpm/i }).textContent).toContain('▼');
   });
+
+  it('exposes the active sort column and direction via aria-sort for screen readers', () => {
+    const { rerender } = render(
+      <SongTable songs={songs} sortBy="bpm" sortDir="asc" onSort={() => {}} />
+    );
+    expect(screen.getByRole('columnheader', { name: /bpm/i })).toHaveAttribute('aria-sort', 'ascending');
+    expect(screen.getByRole('columnheader', { name: /title/i })).not.toHaveAttribute('aria-sort');
+
+    rerender(<SongTable songs={songs} sortBy="bpm" sortDir="desc" onSort={() => {}} />);
+    expect(screen.getByRole('columnheader', { name: /bpm/i })).toHaveAttribute('aria-sort', 'descending');
+  });
+
+  it('does not set aria-sort on any header when sorting is unavailable', () => {
+    render(<SongTable songs={songs} />);
+    for (const header of screen.getAllByRole('columnheader')) {
+      expect(header).not.toHaveAttribute('aria-sort');
+    }
+  });
 });

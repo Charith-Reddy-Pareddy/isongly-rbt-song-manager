@@ -88,6 +88,14 @@ describe('BrowsePanel', () => {
     expect(await screen.findByText('Song A')).toBeInTheDocument();
   });
 
+  it('gives the search input and genre select accessible names', async () => {
+    render(<BrowsePanel />);
+    await vi.advanceTimersByTimeAsync(300);
+
+    expect(screen.getByRole('searchbox', { name: /search by title or artist/i })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /filter by genre/i })).toBeInTheDocument();
+  });
+
   it('initializes query/genre/sort from the URL on mount', async () => {
     window.history.pushState({}, '', '/?q=bieber&genre=pop&sortBy=bpm&sortDir=desc');
     render(<BrowsePanel />);
