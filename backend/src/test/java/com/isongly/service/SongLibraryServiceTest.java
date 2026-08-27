@@ -111,6 +111,24 @@ class SongLibraryServiceTest {
   }
 
   @Test
+  void readDataLoadsBundledDatasetWithoutEncodingCorruption() throws IOException {
+    // Regression test: the bundled CSV once contained 29 lines with a
+    // literal U+FFFD replacement character (e.g. "Beyonc�" instead of
+    // "Beyoncé") baked into the file itself -- not a read-encoding bug, the
+    // bytes on disk were already corrupted. Fixed by restoring the correct
+    // characters in the CSV; this guards against that regressing silently.
+    SongLibraryService backend = new SongLibraryService(new IterableRedBlackTree<>());
+    try (InputStreamReader reader =
+             new InputStreamReader(getClass().getResourceAsStream("/songs.csv"), java.nio.charset.StandardCharsets.UTF_8)) {
+      backend.readData(reader);
+    }
+    for (Song song : backend.getSongCollection()) {
+      assertFalse(song.getTitle().contains("�"), "corrupted title: " + song.getTitle());
+      assertFalse(song.getArtist().contains("�"), "corrupted artist: " + song.getArtist());
+    }
+  }
+
+  @Test
   void readDataThrowsIOExceptionForEmptyContent() {
     SongLibraryService backend = new SongLibraryService(new IterableRedBlackTree<>());
     assertThrows(IOException.class, () -> backend.readData(new StringReader("")));
