@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getRange, getFilteredByYear, getTopFive, reset, uploadCsv } from '../api';
+import { getRange, getFilteredByYear, getTopFive, reset, uploadCsv, reloadSampleData } from '../api';
 import SongTable from './SongTable';
 
 /**
@@ -81,6 +81,13 @@ export default function SpecDemoPanel() {
     e.target.value = '';
   }
 
+  function handleReloadSample() {
+    setMinBpm('');
+    setMaxBpm('');
+    setYear('');
+    run(() => reloadSampleData(), (count) => `Restored the bundled sample dataset — ${count} song(s)`);
+  }
+
   return (
     <>
       <section className="controls">
@@ -129,6 +136,9 @@ export default function SpecDemoPanel() {
             Load a different CSV
             <input type="file" accept=".csv" onChange={handleUpload} />
           </label>
+          <button type="button" className="secondary" onClick={handleReloadSample}>
+            Restore Sample Dataset
+          </button>
         </div>
       </section>
 

@@ -35,6 +35,10 @@ export function uploadCsv(file) {
   return fetch(`${BASE_URL}/api/songs/upload`, { method: 'POST', body: formData }).then(handle);
 }
 
+export function reloadSampleData() {
+  return fetch(`${BASE_URL}/api/songs/reload-sample`, { method: 'POST' }).then(handle);
+}
+
 export function search({ q = '', genre = '', sortBy = 'title', sortDir = 'asc' } = {}, signal) {
   const params = new URLSearchParams({ sortBy, sortDir });
   if (q) params.set('q', q);

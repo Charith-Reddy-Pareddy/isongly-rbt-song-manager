@@ -119,6 +119,33 @@ class SongControllerIntegrationTest {
   }
 
   @Test
+  @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
+  void reloadSampleRestoresTheOriginalDatasetAfterAnUpload() {
+    // Regression test: uploading a replacement CSV used to be a one-way
+    // door -- there was no way back to the bundled 600-song dataset short
+    // of restarting the whole server.
+    String replacementCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live\n"
+        + "Only Song,Only Artist,pop,2020,120,80,60,-5,10\n";
+
+    MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+    body.add("file", new ByteArrayResource(replacementCsv.getBytes(StandardCharsets.UTF_8)) {
+      @Override
+      public String getFilename() {
+        return "replacement.csv";
+      }
+    });
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+    restTemplate.postForEntity(url("/api/songs/upload"), new HttpEntity<>(body, headers), String.class);
+
+    SongDto[] afterUpload = restTemplate.getForObject(url("/api/songs/search"), SongDto[].class);
+    assertThat(afterUpload.length).isEqualTo(1);
+
+    SongDto[] afterReload = restTemplate.postForObject(url("/api/songs/reload-sample"), null, SongDto[].class);
+    assertThat(afterReload.length).isEqualTo(600);
+  }
+
+  @Test
   void genresReturnsNonEmptySortedDistinctList() {
     String[] genres = restTemplate.getForObject(url("/api/songs/genres"), String[].class);
 

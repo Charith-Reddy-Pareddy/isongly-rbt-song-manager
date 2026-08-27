@@ -114,8 +114,11 @@ cd backend
 | GET    | `/api/songs/top-five`    | up to five most energetic songs in the current range/filter        |
 | POST   | `/api/songs/reset`       | clears the BPM range and year filter                               |
 | POST   | `/api/songs/upload`      | multipart CSV upload, replaces the loaded library                  |
+| POST   | `/api/songs/reload-sample` | discards whatever was uploaded and restores the bundled 600-song dataset |
 | GET    | `/api/songs/search`      | `?q=&genre=&sortBy=&sortDir=` — free-text search + sort, ignores range/filter state |
 | GET    | `/api/songs/genres`      | every distinct genre in the loaded library, alphabetically         |
+
+Note: the loaded library is a single shared, in-memory instance — there's no per-user session, so an upload replaces the dataset for every visitor (this mirrors the original single-user CLI's design; see `SongLibraryService`). `reload-sample` exists specifically so an upload (accidental or otherwise, including your own testing) is always recoverable without restarting the server.
 
 ## Tech
 

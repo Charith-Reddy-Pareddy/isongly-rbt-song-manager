@@ -3,6 +3,8 @@ package com.isongly.web;
 import com.isongly.service.SongLibraryService;
 import com.isongly.web.dto.SongDto;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,9 +24,13 @@ import java.util.List;
 public class SongController {
 
   private final SongLibraryService songLibraryService;
+  private final Resource sampleData;
 
-  public SongController(SongLibraryService songLibraryService) {
+  public SongController(
+      SongLibraryService songLibraryService,
+      @Value("classpath:songs.csv") Resource sampleData) {
     this.songLibraryService = songLibraryService;
+    this.sampleData = sampleData;
   }
 
   /** [G]et songs by Speed: titles ordered by BPM within [min, max] (either bound optional). */
@@ -83,6 +89,23 @@ public class SongController {
     } catch (IOException e) {
       return ResponseEntity.status(HttpStatus.BAD_REQUEST)
           .body("Could not read CSV file: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Restores the bundled sample dataset, discarding whatever was loaded by a
+   * previous upload. Without this, there was no way back to the original
+   * 600-song dataset short of restarting the server.
+   */
+  @PostMapping("/reload-sample")
+  public ResponseEntity<?> reloadSample() {
+    try (var reader = new InputStreamReader(sampleData.getInputStream(), StandardCharsets.UTF_8)) {
+      songLibraryService.replaceData(reader);
+      return ResponseEntity.ok(
+          songLibraryService.getRangeAsSongs(null, null).stream().map(SongDto::from).toList());
+    } catch (IOException e) {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body("Could not reload the sample dataset: " + e.getMessage());
     }
   }
 }
