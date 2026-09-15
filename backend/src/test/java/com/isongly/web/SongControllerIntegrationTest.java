@@ -99,7 +99,7 @@ class SongControllerIntegrationTest {
     // parsing the replacement CSV, wiping out all 600 bundled songs.
     // @DirtiesContext resets the shared bean afterward so this destructive
     // test can't affect the other tests in this class.
-    String malformedCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live\nOnly Title,Only Artist\n";
+    String malformedCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live,val,dur,acous,spch,pop\nOnly Title,Only Artist\n";
 
     MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
     body.add("file", new ByteArrayResource(malformedCsv.getBytes(StandardCharsets.UTF_8)) {
@@ -124,8 +124,8 @@ class SongControllerIntegrationTest {
     // Regression test: uploading a replacement CSV used to be a one-way
     // door -- there was no way back to the bundled 600-song dataset short
     // of restarting the whole server.
-    String replacementCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live\n"
-        + "Only Song,Only Artist,pop,2020,120,80,60,-5,10\n";
+    String replacementCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live,val,dur,acous,spch,pop\n"
+        + "Only Song,Only Artist,pop,2020,120,80,60,-5,10,70,200,5,4,60\n";
 
     MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
     body.add("file", new ByteArrayResource(replacementCsv.getBytes(StandardCharsets.UTF_8)) {

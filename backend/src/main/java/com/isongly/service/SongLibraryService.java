@@ -98,15 +98,20 @@ public class SongLibraryService implements BackendInterface {
         List<String> fields = splitCsvLine(scanner.nextLine());
         try {
           songs.add(new Song(
-              fields.get(indices[0]),               // title
-              fields.get(indices[1]),                // artist
-              fields.get(indices[2]),                // genre
-              parseIntSafe(fields.get(indices[3])),  // year
-              parseIntSafe(fields.get(indices[4])),  // bpm
-              parseIntSafe(fields.get(indices[5])),  // energy
-              parseIntSafe(fields.get(indices[6])),  // danceability
-              parseIntSafe(fields.get(indices[7])),  // loudness
-              parseIntSafe(fields.get(indices[8]))   // liveness
+              fields.get(indices[0]),                 // title
+              fields.get(indices[1]),                  // artist
+              fields.get(indices[2]),                  // genre
+              parseIntSafe(fields.get(indices[3])),    // year
+              parseIntSafe(fields.get(indices[4])),    // bpm
+              parseIntSafe(fields.get(indices[5])),    // energy
+              parseIntSafe(fields.get(indices[6])),    // danceability
+              parseIntSafe(fields.get(indices[7])),    // loudness
+              parseIntSafe(fields.get(indices[8])),    // liveness
+              parseIntSafe(fields.get(indices[9])),    // valence
+              parseIntSafe(fields.get(indices[10])),   // duration (seconds)
+              parseIntSafe(fields.get(indices[11])),   // acousticness
+              parseIntSafe(fields.get(indices[12])),   // speechiness
+              parseIntSafe(fields.get(indices[13]))    // popularity
           ));
         } catch (IndexOutOfBoundsException e) {
           throw new IOException("Line " + lineNumber + " has fewer columns than the header.", e);
@@ -154,7 +159,8 @@ public class SongLibraryService implements BackendInterface {
   }
 
   private static final String[] REQUIRED_COLUMNS =
-      {"title", "artist", "top genre", "year", "bpm", "nrgy", "dnce", "db", "live"};
+      {"title", "artist", "top genre", "year", "bpm", "nrgy", "dnce", "db", "live",
+          "val", "dur", "acous", "spch", "pop"};
 
   /**
    * Maps each required column name to its position in the CSV header row.
@@ -175,6 +181,11 @@ public class SongLibraryService implements BackendInterface {
         case "dnce" -> indices[6] = i;
         case "db" -> indices[7] = i;
         case "live" -> indices[8] = i;
+        case "val" -> indices[9] = i;
+        case "dur" -> indices[10] = i;
+        case "acous" -> indices[11] = i;
+        case "spch" -> indices[12] = i;
+        case "pop" -> indices[13] = i;
         default -> { /* ignore columns we don't need */ }
       }
     }

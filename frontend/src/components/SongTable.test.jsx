@@ -4,7 +4,11 @@ import { describe, expect, it, vi } from 'vitest';
 import SongTable from './SongTable';
 
 const songs = [
-  { title: 'Alpha', artist: 'A', genre: 'pop', year: 2010, bpm: 100, energy: 50 },
+  {
+    title: 'Alpha', artist: 'A', genre: 'pop', year: 2010, bpm: 100, energy: 50,
+    durationSeconds: 185, popularity: 72, danceability: 60, valence: 55,
+    acousticness: 10, speechiness: 5, loudness: -4, liveness: 8,
+  },
   { title: 'Beta', artist: 'B', genre: 'rock', year: 2015, bpm: 120, energy: 70 },
 ];
 
@@ -63,5 +67,39 @@ describe('SongTable', () => {
     for (const header of screen.getAllByRole('columnheader')) {
       expect(header).not.toHaveAttribute('aria-sort');
     }
+  });
+
+  it('expands a row to show extra details, and collapses it again on a second click', async () => {
+    const user = userEvent.setup();
+    render(<SongTable songs={songs} />);
+
+    expect(screen.queryByText('3:05')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /show details for alpha/i }));
+    expect(screen.getByText('3:05')).toBeInTheDocument(); // 185s formatted
+    expect(screen.getByText('72/100')).toBeInTheDocument(); // popularity
+
+    await user.click(screen.getByRole('button', { name: /hide details for alpha/i }));
+    expect(screen.queryByText('3:05')).not.toBeInTheDocument();
+  });
+
+  it('only shows one row expanded at a time', async () => {
+    const user = userEvent.setup();
+    render(<SongTable songs={songs} />);
+
+    await user.click(screen.getByRole('button', { name: /show details for alpha/i }));
+    expect(screen.getByText('3:05')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /show details for beta/i }));
+    expect(screen.queryByText('3:05')).not.toBeInTheDocument();
+  });
+
+  it('falls back to a placeholder for missing detail fields instead of showing blank/undefined', async () => {
+    const user = userEvent.setup();
+    render(<SongTable songs={songs} />);
+
+    await user.click(screen.getByRole('button', { name: /show details for beta/i }));
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
+    expect(screen.queryByText('undefined')).not.toBeInTheDocument();
   });
 });

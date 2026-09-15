@@ -87,8 +87,8 @@ class SongLibraryServiceTest {
   void readDataParsesColumnsIncludingGenreRegardlessOfOrder() throws IOException {
     // Regression test: the original Song constructor accidentally assigned
     // its genre field to itself, so every song's genre was silently null.
-    String csv = "artist,title,bpm,top genre,year,nrgy,dnce,dB,live\n"
-        + "Test Artist,Test Song,120,synthpop,2020,80,60,-5,10\n";
+    String csv = "artist,title,bpm,top genre,year,nrgy,dnce,dB,live,val,dur,acous,spch,pop\n"
+        + "Test Artist,Test Song,120,synthpop,2020,80,60,-5,10,70,200,5,4,60\n";
     SongLibraryService backend = new SongLibraryService(new IterableRedBlackTree<>());
     backend.readData(new StringReader(csv));
 
@@ -140,8 +140,8 @@ class SongLibraryServiceTest {
     // to silently default that column's index to 0, so every song's BPM was
     // read from the title column instead and silently parsed as 0 -- no
     // exception, just corrupted data.
-    String csv = "title,artist,top genre,year,nrgy,dnce,dB,live\n" // no "bpm" column
-        + "Song One,Artist One,pop,2020,80,60,-5,10\n";
+    String csv = "title,artist,top genre,year,nrgy,dnce,dB,live,val,dur,acous,spch,pop\n" // no "bpm" column
+        + "Song One,Artist One,pop,2020,80,60,-5,10,70,200,5,4,60\n";
     SongLibraryService backend = new SongLibraryService(new IterableRedBlackTree<>());
 
     IOException ex = assertThrows(IOException.class, () -> backend.readData(new StringReader(csv)));
@@ -152,7 +152,7 @@ class SongLibraryServiceTest {
   void readDataThrowsCleanIOExceptionForRowWithTooFewColumns() {
     // Regression test: a data row with fewer columns than the header used to
     // throw an unhandled IndexOutOfBoundsException instead of a clean IOException.
-    String csv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live\nOnly Title,Only Artist\n";
+    String csv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live,val,dur,acous,spch,pop\nOnly Title,Only Artist\n";
     SongLibraryService backend = new SongLibraryService(new IterableRedBlackTree<>());
 
     IOException ex = assertThrows(IOException.class, () -> backend.readData(new StringReader(csv)));
@@ -164,10 +164,10 @@ class SongLibraryServiceTest {
     // Regression test: the upload endpoint used to clear() the library before
     // parsing the new CSV, so a malformed upload wiped out everything that
     // was previously loaded instead of leaving it in place.
-    String goodCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live\n"
-        + "Song One,Artist One,pop,2020,120,80,60,-5,10\n"
-        + "Song Two,Artist Two,pop,2021,110,70,50,-6,20\n";
-    String malformedCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live\nOnly Title,Only Artist\n";
+    String goodCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live,val,dur,acous,spch,pop\n"
+        + "Song One,Artist One,pop,2020,120,80,60,-5,10,70,200,5,4,60\n"
+        + "Song Two,Artist Two,pop,2021,110,70,50,-6,20,65,190,10,3,55\n";
+    String malformedCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live,val,dur,acous,spch,pop\nOnly Title,Only Artist\n";
 
     SongLibraryService backend = new SongLibraryService(new IterableRedBlackTree<>());
     backend.readData(new StringReader(goodCsv));
@@ -180,10 +180,10 @@ class SongLibraryServiceTest {
 
   @Test
   void replaceDataClearsOldLibraryWhenNewCsvIsValid() throws IOException {
-    String goodCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live\n"
-        + "Song One,Artist One,pop,2020,120,80,60,-5,10\n";
-    String replacementCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live\n"
-        + "New Song,New Artist,rock,2022,130,90,70,-4,30\n";
+    String goodCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live,val,dur,acous,spch,pop\n"
+        + "Song One,Artist One,pop,2020,120,80,60,-5,10,70,200,5,4,60\n";
+    String replacementCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live,val,dur,acous,spch,pop\n"
+        + "New Song,New Artist,rock,2022,130,90,70,-4,30,60,210,8,6,50\n";
 
     SongLibraryService backend = new SongLibraryService(new IterableRedBlackTree<>());
     backend.readData(new StringReader(goodCsv));

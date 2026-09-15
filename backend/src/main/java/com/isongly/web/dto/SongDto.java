@@ -12,7 +12,12 @@ public record SongDto(
     int energy,
     int danceability,
     int loudness,
-    int liveness
+    int liveness,
+    int valence,
+    int durationSeconds,
+    int acousticness,
+    int speechiness,
+    int popularity
 ) {
   public static SongDto from(Song song) {
     return new SongDto(
@@ -24,6 +29,11 @@ public record SongDto(
         song.getEnergy(),
         song.getDanceability(),
         song.getLoudness(),
-        song.getLiveness());
+        song.getLiveness(),
+        song.getValence(),
+        song.getDurationSeconds(),
+        song.getAcousticness(),
+        song.getSpeechiness(),
+        song.getPopularity());
   }
 }
