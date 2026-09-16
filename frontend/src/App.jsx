@@ -25,7 +25,7 @@ export default function App() {
       <header className="app-header">
         <h1>iSongly</h1>
         <p className="subtitle">
-          A song library backed by a hand-built Red-Black Tree, served over a Spring Boot REST API.
+          A song library backed by a Red-Black Tree, served over a Spring Boot REST API.
         </p>
         <nav className="tabs">
           {TABS.map((t) => (
