@@ -347,6 +347,33 @@ tr.details-row td {
   border-radius: 4px;
 }
 
+.movement {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.movement-up {
+  color: var(--success);
+}
+
+.movement-down {
+  color: var(--danger);
+}
+
+.movement-new {
+  color: var(--accent);
+}
+
+.movement-same {
+  color: var(--text-muted);
+}
+
+.data-attribution {
+  margin: 1rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
 @media (max-width: 560px) {
   .browse-controls {
     flex-direction: column;

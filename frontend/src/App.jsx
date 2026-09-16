@@ -1,15 +1,24 @@
 import { useState } from 'react';
 import BrowsePanel from './components/BrowsePanel';
 import SpecDemoPanel from './components/SpecDemoPanel';
+import TrendingPanel from './components/TrendingPanel';
 import './App.css';
 
 const TABS = [
   { key: 'browse', label: 'Browse & Search' },
+  { key: 'trending', label: 'Trending' },
   { key: 'demo', label: 'Original Assignment API' },
 ];
 
+const PANELS = {
+  browse: BrowsePanel,
+  trending: TrendingPanel,
+  demo: SpecDemoPanel,
+};
+
 export default function App() {
   const [tab, setTab] = useState('browse');
+  const ActivePanel = PANELS[tab];
 
   return (
     <div className="app">
@@ -32,7 +41,7 @@ export default function App() {
         </nav>
       </header>
 
-      {tab === 'browse' ? <BrowsePanel /> : <SpecDemoPanel />}
+      <ActivePanel />
     </div>
   );
 }

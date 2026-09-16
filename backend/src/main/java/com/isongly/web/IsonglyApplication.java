@@ -2,6 +2,7 @@ package com.isongly.web;
 
 import com.isongly.model.Song;
 import com.isongly.service.SongLibraryService;
+import com.isongly.service.TrendingChartService;
 import com.isongly.tree.IterableRedBlackTree;
 import com.isongly.tree.IterableSortedCollection;
 
@@ -43,6 +44,18 @@ public class IsonglyApplication {
         System.err.println("Could not load bundled sample dataset: " + e.getMessage());
       }
     };
+  }
+
+  /**
+   * Billboard Hot 100 snapshot for chart week 2026-09-19, sourced from the
+   * MIT-licensed utdata/rwd-billboard-data archive (see TrendingChartService).
+   */
+  @Bean
+  public TrendingChartService trendingChartService(
+      @Value("classpath:trending.csv") Resource trendingData) throws IOException {
+    try (var reader = new InputStreamReader(trendingData.getInputStream(), StandardCharsets.UTF_8)) {
+      return new TrendingChartService(reader, "2026-09-19");
+    }
   }
 
   /**

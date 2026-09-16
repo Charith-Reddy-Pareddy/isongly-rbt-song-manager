@@ -49,3 +49,7 @@ export function search({ q = '', genre = '', sortBy = 'title', sortDir = 'asc' }
 export function getGenres() {
   return fetch(`${BASE_URL}/api/songs/genres`).then(handle);
 }
+
+export function getTrending() {
+  return fetch(`${BASE_URL}/api/trending`).then(handle);
+}

@@ -117,6 +117,11 @@ cd backend
 | POST   | `/api/songs/reload-sample` | discards whatever was uploaded and restores the bundled 600-song dataset |
 | GET    | `/api/songs/search`      | `?q=&genre=&sortBy=&sortDir=` — free-text search + sort, ignores range/filter state |
 | GET    | `/api/songs/genres`      | every distinct genre in the loaded library, alphabetically         |
+| GET    | `/api/trending`          | a fixed Billboard Hot 100 chart-week snapshot (see below)          |
+
+### Trending tab
+
+The **Trending** tab shows a real Billboard Hot 100 chart-week snapshot (rank, title, performer, peak position, weeks on chart, and week-over-week movement) — separate from the audio-feature song library above, since Billboard chart data and Spotify-style audio features aren't the same shape and don't merge cleanly. Sourced from [utdata/rwd-billboard-data](https://github.com/utdata/rwd-billboard-data) (MIT licensed), which scrapes Billboard weekly; the bundled `trending.csv` is a single dated snapshot pulled at build time (chart week 2026-09-19), not a live feed — `TrendingChartService` has no upload/replace path, unlike the song library.
 
 Note: the loaded library is a single shared, in-memory instance — there's no per-user session, so an upload replaces the dataset for every visitor (this mirrors the original single-user CLI's design; see `SongLibraryService`). `reload-sample` exists specifically so an upload (accidental or otherwise, including your own testing) is always recoverable without restarting the server.
 
