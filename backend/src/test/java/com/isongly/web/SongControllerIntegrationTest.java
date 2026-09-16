@@ -22,8 +22,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class SongControllerIntegrationTest {
 
-  // 600 from the original CS400 songs.csv + 26,160 deduplicated from the merged songs-extra.csv
-  private static final int TOTAL_SAMPLE_SONGS = 26760;
+  // 600 from the original CS400 songs.csv + 26,160 from songs-extra.csv + 677 from songs-recent.csv
+  private static final int TOTAL_SAMPLE_SONGS = 27437;
 
   @LocalServerPort
   private int port;
@@ -115,7 +115,23 @@ class SongControllerIntegrationTest {
 
     assertThat(songs).isNotEmpty();
     for (SongDto song : songs) {
-      assertThat(song.energy()).isLessThanOrEqualTo(10);
+      // Regression: -1 (unknown energy) numerically satisfies "<= 10" but must not match.
+      assertThat(song.hasAudioFeatures()).isTrue();
+      assertThat(song.energy()).isBetween(0, 10);
+    }
+  }
+
+  @Test
+  void searchByYearAloneFindsRealSongsFrom2021Through2026WithNoAudioFeatures() {
+    // Regression test for the bug report: Browse & Search's year filter used
+    // to return zero results for 2021+ because those songs only existed in
+    // a separate Trending archive, never in the searchable library at all.
+    SongDto[] songs = restTemplate.getForObject(url("/api/songs/search?minYear=2021"), SongDto[].class);
+
+    assertThat(songs).isNotEmpty();
+    for (SongDto song : songs) {
+      assertThat(song.year()).isGreaterThanOrEqualTo(2021);
+      assertThat(song.hasAudioFeatures()).isFalse();
     }
   }
 

@@ -102,4 +102,19 @@ describe('SongTable', () => {
     expect(screen.getAllByText('—').length).toBeGreaterThan(0);
     expect(screen.queryByText('undefined')).not.toBeInTheDocument();
   });
+
+  it('shows "—" instead of the raw -1 sentinel for a song with no audio-feature data', async () => {
+    const user = userEvent.setup();
+    const noFeatureSongs = [
+      { title: 'New Release', artist: 'New Artist', genre: 'unknown', year: 2024, bpm: -1, energy: -1, hasAudioFeatures: false },
+    ];
+    render(<SongTable songs={noFeatureSongs} />);
+
+    // Main columns show "—", not "-1"
+    expect(screen.queryByText('-1')).not.toBeInTheDocument();
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole('button', { name: /show details for new release/i }));
+    expect(screen.getByText(/no audio-feature data is available/i)).toBeInTheDocument();
+  });
 });

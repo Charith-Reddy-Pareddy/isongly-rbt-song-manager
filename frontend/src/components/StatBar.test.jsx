@@ -23,4 +23,17 @@ describe('StatBar', () => {
     expect(screen.getByText('51')).toBeInTheDocument(); // avg energy
     expect(screen.getByText('2011')).toBeInTheDocument(); // avg year
   });
+
+  it('excludes songs with no audio-feature data from avg BPM/energy, but still counts them and their year', () => {
+    const songs = [
+      { bpm: 100, energy: 50, year: 2010, hasAudioFeatures: true },
+      { bpm: -1, energy: -1, year: 2024, hasAudioFeatures: false },
+    ];
+    render(<StatBar songs={songs} />);
+
+    expect(screen.getByText('2')).toBeInTheDocument(); // count includes both
+    expect(screen.getByText('100')).toBeInTheDocument(); // avg bpm ignores the unknown one
+    expect(screen.getByText('50')).toBeInTheDocument(); // avg energy ignores the unknown one
+    expect(screen.getByText('2017')).toBeInTheDocument(); // avg year uses both: (2010+2024)/2
+  });
 });

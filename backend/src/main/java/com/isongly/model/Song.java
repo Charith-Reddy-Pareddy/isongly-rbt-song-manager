@@ -8,6 +8,14 @@ import java.util.Comparator;
  */
 public class Song implements Comparable<Song> {
 
+  /**
+   * Sentinel for an audio-feature field (bpm, energy, danceability, etc.)
+   * whose real value isn't known -- e.g. songs added from chart data where
+   * no free source of audio features exists. All such fields are always
+   * unknown together (never a mix), since they come from the same source.
+   */
+  public static final int UNKNOWN = -1;
+
   private final String title;
   private final String artist;
   private final String genre;
@@ -105,6 +113,9 @@ public class Song implements Comparable<Song> {
   public int getSpeechiness() { return speechiness; }
   /** Relative popularity score (0-100) as recorded in the source dataset. */
   public int getPopularity() { return popularity; }
+
+  /** False for songs added from a source with no audio-feature data (see {@link #UNKNOWN}). */
+  public boolean hasAudioFeatures() { return bpm != UNKNOWN; }
 
   @Override
   public int compareTo(Song other) {

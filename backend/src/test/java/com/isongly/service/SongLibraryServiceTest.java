@@ -266,6 +266,39 @@ class SongLibraryServiceTest {
   }
 
   @Test
+  void searchByYearAloneFindsSongsWithUnknownAudioFeatures() {
+    // Regression test for the actual user-facing bug: songs added with only
+    // a real year but no audio features (no free source for BPM/energy/etc.
+    // on newer songs) must still be findable by year alone.
+    IterableRedBlackTree<Song> tree = new IterableRedBlackTree<>();
+    tree.insert(new Song("New Release", "New Artist", "unknown", 2024,
+        Song.UNKNOWN, Song.UNKNOWN, Song.UNKNOWN, Song.UNKNOWN, Song.UNKNOWN,
+        Song.UNKNOWN, Song.UNKNOWN, Song.UNKNOWN, Song.UNKNOWN, Song.UNKNOWN));
+    SongLibraryService backend = new SongLibraryService(tree);
+
+    SearchCriteria criteria = new SearchCriteria("", null, 2021, null, null, null, null, null, "title", "asc");
+    assertEquals(List.of("New Release"), titlesOf(backend.search(criteria)));
+  }
+
+  @Test
+  void searchWithAudioFeatureBoundExcludesSongsWithUnknownAudioFeatures() {
+    // Regression test: a raw numeric comparison would let an "unknown" (-1)
+    // energy pass a maxEnergy=10 filter, since -1 <= 10. Unknown must never
+    // satisfy an active audio-feature bound, low or high.
+    IterableRedBlackTree<Song> tree = new IterableRedBlackTree<>();
+    tree.insert(new Song("Known Song", "Artist A", "pop", 2022, 120, 80, 60, -5, 10, 50, 200, 5, 4, 60));
+    tree.insert(new Song("Unknown Song", "Artist B", "unknown", 2022,
+        Song.UNKNOWN, Song.UNKNOWN, Song.UNKNOWN, Song.UNKNOWN, Song.UNKNOWN,
+        Song.UNKNOWN, Song.UNKNOWN, Song.UNKNOWN, Song.UNKNOWN, Song.UNKNOWN));
+    SongLibraryService backend = new SongLibraryService(tree);
+
+    assertEquals(2, backend.search(SearchCriteria.unbounded("", null, "title", "asc")).size());
+
+    SearchCriteria maxEnergyTen = new SearchCriteria("", null, null, null, null, null, null, 10, "title", "asc");
+    assertEquals(List.of(), titlesOf(backend.search(maxEnergyTen)));
+  }
+
+  @Test
   void getGenresReturnsDistinctGenresAlphabetically() {
     SongLibraryService backend = new SongLibraryService(new SongTreePlaceholder());
     assertEquals(Arrays.asList("dance pop", "permanent wave"), backend.getGenres());

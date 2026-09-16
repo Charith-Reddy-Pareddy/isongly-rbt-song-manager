@@ -305,7 +305,19 @@ public class SongLibraryService implements BackendInterface {
     return results;
   }
 
+  /**
+   * True if value is within [min, max] (either bound optional/unbounded).
+   * An {@link Song#UNKNOWN} value never satisfies an actual bound -- "we
+   * don't know this song's BPM" is not the same as "it's a low BPM" -- but
+   * still matches when no bound is set on that field at all.
+   */
   private boolean withinBounds(int value, Integer min, Integer max) {
+    if (min == null && max == null) {
+      return true;
+    }
+    if (value == Song.UNKNOWN) {
+      return false;
+    }
     return (min == null || value >= min) && (max == null || value <= max);
   }
 

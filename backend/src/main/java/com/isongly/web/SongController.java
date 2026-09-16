@@ -27,14 +27,17 @@ public class SongController {
   private final SongLibraryService songLibraryService;
   private final Resource sampleData;
   private final Resource extraSampleData;
+  private final Resource recentSampleData;
 
   public SongController(
       SongLibraryService songLibraryService,
       @Value("classpath:songs.csv") Resource sampleData,
-      @Value("classpath:songs-extra.csv") Resource extraSampleData) {
+      @Value("classpath:songs-extra.csv") Resource extraSampleData,
+      @Value("classpath:songs-recent.csv") Resource recentSampleData) {
     this.songLibraryService = songLibraryService;
     this.sampleData = sampleData;
     this.extraSampleData = extraSampleData;
+    this.recentSampleData = recentSampleData;
   }
 
   /** [G]et songs by Speed: titles ordered by BPM within [min, max] (either bound optional). */
@@ -116,8 +119,9 @@ public class SongController {
   @PostMapping("/reload-sample")
   public ResponseEntity<?> reloadSample() {
     try (var reader = new InputStreamReader(sampleData.getInputStream(), StandardCharsets.UTF_8);
-         var extraReader = new InputStreamReader(extraSampleData.getInputStream(), StandardCharsets.UTF_8)) {
-      songLibraryService.replaceData(reader, extraReader);
+         var extraReader = new InputStreamReader(extraSampleData.getInputStream(), StandardCharsets.UTF_8);
+         var recentReader = new InputStreamReader(recentSampleData.getInputStream(), StandardCharsets.UTF_8)) {
+      songLibraryService.replaceData(reader, extraReader, recentReader);
       return ResponseEntity.ok(
           songLibraryService.getRangeAsSongs(null, null).stream().map(SongDto::from).toList());
     } catch (IOException e) {

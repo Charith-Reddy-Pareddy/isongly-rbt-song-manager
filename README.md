@@ -63,7 +63,7 @@ isongly-rbt-song-manager/
 │   │   ├── service/  BackendInterface, SongLibraryService, TrendingChartService, RecentHitsService
 │   │   ├── cli/      FrontendInterface, ConsoleFrontend, IsonglyCli (console entry point)
 │   │   └── web/      IsonglyApplication (Spring Boot entry point), SongController, TrendingController, RecentHitsController, dto/
-│   ├── src/main/resources/songs.csv, songs-extra.csv   bundled song library (26,760 songs total)
+│   ├── src/main/resources/songs.csv, songs-extra.csv, songs-recent.csv   bundled song library (27,437 songs total)
 │   ├── src/main/resources/trending.csv                 bundled Billboard Hot 100 snapshot (see below)
 │   ├── src/main/resources/recent-hits.csv              bundled 2021–2026 Billboard archive (see below)
 │   └── src/test/java/...              JUnit 5 tests (tree, service, CLI, REST)
@@ -116,7 +116,7 @@ cd backend
 | GET    | `/api/songs/top-five`    | up to five most energetic songs in the current range/filter        |
 | POST   | `/api/songs/reset`       | clears the BPM range and year filter                               |
 | POST   | `/api/songs/upload`      | multipart CSV upload, replaces the loaded library                  |
-| POST   | `/api/songs/reload-sample` | discards whatever was uploaded and restores the bundled 26,760-song dataset |
+| POST   | `/api/songs/reload-sample` | discards whatever was uploaded and restores the bundled 27,437-song dataset |
 | GET    | `/api/songs/search`      | `?q=&genre=&minYear=&maxYear=&minBpm=&maxBpm=&minEnergy=&maxEnergy=&sortBy=&sortDir=` — free-text search with independent year/BPM/energy range filters, ignores range/filter state |
 | GET    | `/api/songs/genres`      | every distinct genre in the loaded library, alphabetically         |
 | GET    | `/api/trending`          | a fixed Billboard Hot 100 chart-week snapshot (see below)          |
@@ -124,11 +124,12 @@ cd backend
 
 ### Song library data
 
-The library loads two bundled CSVs at startup, both in the same 14-column schema so they parse with no code changes:
+The library loads three bundled CSVs at startup, all in the same 14-column schema so they parse with no code changes:
 - **`songs.csv`** — the original 600-song CS400 dataset (2010–2019).
 - **`songs-extra.csv`** — 26,160 deduplicated songs from the CC0-licensed [TidyTuesday Spotify Songs dataset](https://github.com/rfordatascience/tidytuesday/tree/main/data/2020/2020-01-21) (spans 1957–early 2020), added to broaden genre and era coverage.
+- **`songs-recent.csv`** — 677 real 2021–2026 releases, derived from the same Billboard archive as the Trending tab (see below), filtered down to songs whose *earliest* chart appearance falls in that window — so it's genuinely new music, not old catalog songs re-charting.
 
-Genuinely current (2023+) song data with full audio features (BPM, energy, danceability, etc.) isn't freely available the way it used to be — Spotify locked down its audio-features API for new developer apps in late 2024, so recent public datasets either omit audio features, omit release dates, or (in at least one case checked) turned out to be synthetic data presented as real, which was rejected rather than bundled. The **Trending** tab below covers genuinely current data instead, just without audio features. Because the two song datasets were collected independently, a small number of songs (mostly from artists active right at the 2019–2020 boundary) appear once from each source with slightly different computed values — this is normal, honest overlap between two real datasets, not a duplicate-insertion bug.
+Genuinely current (2023+) song data with full audio features (BPM, energy, danceability, etc.) isn't freely available the way it used to be — Spotify locked down its audio-features API for new developer apps in late 2024, so recent public datasets either omit audio features, omit release dates, or (in at least one case checked) turned out to be synthetic data presented as real, which was rejected rather than bundled. `songs-recent.csv` closes that gap honestly instead of faking the missing values: its rows carry a real release year but use a sentinel of `-1` (`Song.UNKNOWN`) for every audio-feature column, and `Song.hasAudioFeatures()` (exposed to the frontend as `hasAudioFeatures` on each song) reports `false` for them. Search/filter treats that sentinel as "we don't know," not as a low value — an active BPM/energy/etc. bound never matches an unknown song, but a year-only search still finds it. The UI shows "—" instead of `-1` wherever these fields would otherwise render, and excludes unknown values from averages while still counting the song itself. Because the datasets were collected independently, a small number of songs (mostly from artists active right at the 2019–2020 boundary) appear once from each source with slightly different computed values — this is normal, honest overlap between real datasets, not a duplicate-insertion bug.
 
 The frontend's Browse & Search table renders at most 300 rows at a time (with a note when a search matches more) to keep the DOM responsive at this size; the stat bar and match count always reflect the full result set.
 
@@ -136,7 +137,7 @@ The frontend's Browse & Search table renders at most 300 rows at a time (with a 
 
 The **Trending** tab shows a real Billboard Hot 100 chart-week snapshot (rank, title, performer, peak position, weeks on chart, and week-over-week movement) — separate from the audio-feature song library above, since Billboard chart data and Spotify-style audio features aren't the same shape and don't merge cleanly. Sourced from [utdata/rwd-billboard-data](https://github.com/utdata/rwd-billboard-data) (MIT licensed), which scrapes Billboard weekly; the bundled `trending.csv` is a single dated snapshot pulled at build time (chart week 2026-09-19), not a live feed — `TrendingChartService` has no upload/replace path, unlike the song library.
 
-Below it, **"Notable hits, 2021–2026"** covers the gap the main library can't (it tops out ~2020): ~780 real songs deduplicated from the same Billboard archive that reached the Hot 100 top 20 at some point in that window, with client-side search and sort. Its "last charted" field is when that peak happened, not necessarily the song's original release year — a handful of older catalog songs (holiday hits, viral reissues) re-chart and show up here too, which is disclosed in the UI rather than hidden.
+Below it, **"Notable hits, 2021–2026"** (`recent-hits.csv`, 783 songs) casts a wider net over the same window than `songs-recent.csv` does: it's every song that reached the Hot 100 top 20 at some point in 2021–2026, deduplicated from the same Billboard archive, with client-side search and sort. Its "last charted" field is when that peak happened, not necessarily the song's original release year — a handful of older catalog songs (holiday hits, viral reissues) re-chart and show up here too, which is disclosed in the UI rather than hidden. `songs-recent.csv` in the main library is the stricter subset of that archive (677 songs whose *earliest* chart appearance is 2021+), so catalog re-entries like a decades-old holiday hit show up here in Trending but not in Browse & Search.
 
 Note: the loaded library is a single shared, in-memory instance — there's no per-user session, so an upload replaces the dataset for every visitor (this mirrors the original single-user CLI's design; see `SongLibraryService`). `reload-sample` exists specifically so an upload (accidental or otherwise, including your own testing) is always recoverable without restarting the server.
 

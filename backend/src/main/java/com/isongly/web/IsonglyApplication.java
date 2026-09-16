@@ -35,16 +35,20 @@ public class IsonglyApplication {
 
   /**
    * Loads the bundled sample datasets into the tree once on startup: the
-   * original 600-song CS400 CSV, plus a larger, deduplicated extract of the
+   * original 600-song CS400 CSV, a larger deduplicated extract of the
    * CC0-licensed TidyTuesday Spotify Songs dataset (~26k more real songs,
-   * same 14-column schema, so it parses with no code changes).
+   * spanning up to ~2020), and a real 2021-2026 archive derived from
+   * Billboard chart data for songs with no freely available audio features
+   * (BPM/energy/etc. are the -1 sentinel; see Song.hasAudioFeatures()).
+   * All three share the same 14-column schema, so they parse unmodified.
    */
   @Bean
   public CommandLineRunner loadSampleData(
       SongLibraryService songLibraryService,
       @Value("classpath:songs.csv") Resource sampleData,
-      @Value("classpath:songs-extra.csv") Resource extraSampleData) {
-    return args -> loadSampleDatasets(songLibraryService, sampleData, extraSampleData);
+      @Value("classpath:songs-extra.csv") Resource extraSampleData,
+      @Value("classpath:songs-recent.csv") Resource recentSampleData) {
+    return args -> loadSampleDatasets(songLibraryService, sampleData, extraSampleData, recentSampleData);
   }
 
   private void loadSampleDatasets(SongLibraryService songLibraryService, Resource... datasets) {

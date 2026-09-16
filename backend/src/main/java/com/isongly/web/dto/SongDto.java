@@ -2,7 +2,12 @@ package com.isongly.web.dto;
 
 import com.isongly.model.Song;
 
-/** Read-only view of a Song returned by the REST API. */
+/**
+ * Read-only view of a Song returned by the REST API. When
+ * {@code hasAudioFeatures} is false, bpm/energy/danceability/etc. carry no
+ * real data (see {@link Song#UNKNOWN}) -- the frontend should show them as
+ * "unknown" rather than as the raw sentinel value.
+ */
 public record SongDto(
     String title,
     String artist,
@@ -17,7 +22,8 @@ public record SongDto(
     int durationSeconds,
     int acousticness,
     int speechiness,
-    int popularity
+    int popularity,
+    boolean hasAudioFeatures
 ) {
   public static SongDto from(Song song) {
     return new SongDto(
@@ -34,6 +40,7 @@ public record SongDto(
         song.getDurationSeconds(),
         song.getAcousticness(),
         song.getSpeechiness(),
-        song.getPopularity());
+        song.getPopularity(),
+        song.hasAudioFeatures());
   }
 }

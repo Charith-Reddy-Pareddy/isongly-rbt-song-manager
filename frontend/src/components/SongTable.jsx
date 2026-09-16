@@ -31,6 +31,11 @@ function outOf100(value) {
   return value == null ? '—' : `${value}/100`;
 }
 
+/** Renders a BPM/energy/etc. value, or "—" for songs with no audio-feature data at all (see Song.UNKNOWN). */
+function audioFeature(song, value) {
+  return song.hasAudioFeatures === false ? '—' : value;
+}
+
 /**
  * Renders a table of songs. When sortBy/sortDir/onSort are all provided,
  * column headers become clickable and show a sort-direction arrow;
@@ -100,17 +105,22 @@ export default function SongTable({ songs, sortBy, sortDir, onSort }) {
                   <td>{song.artist}</td>
                   <td>{song.genre}</td>
                   <td>{song.year}</td>
-                  <td>{song.bpm}</td>
-                  <td>{song.energy}</td>
+                  <td>{audioFeature(song, song.bpm)}</td>
+                  <td>{audioFeature(song, song.energy)}</td>
                 </tr>
                 {expanded && (
                   <tr className="details-row">
                     <td colSpan={COLUMNS.length + 1}>
+                      {song.hasAudioFeatures === false && (
+                        <p className="details-unavailable">
+                          No audio-feature data is available for this song (see the Trending tab for why).
+                        </p>
+                      )}
                       <dl className="details-grid">
                         {DETAIL_FIELDS.map((field) => (
                           <div key={field.key} className="details-item">
                             <dt>{field.label}</dt>
-                            <dd>{field.format(song[field.key])}</dd>
+                            <dd>{song.hasAudioFeatures === false ? '—' : field.format(song[field.key])}</dd>
                           </div>
                         ))}
                       </dl>
