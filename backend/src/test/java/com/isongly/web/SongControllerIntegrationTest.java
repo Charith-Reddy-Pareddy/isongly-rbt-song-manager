@@ -22,8 +22,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class SongControllerIntegrationTest {
 
-  // 600 from the original CS400 songs.csv + 26,160 from songs-extra.csv + 677 from songs-recent.csv
-  private static final int TOTAL_SAMPLE_SONGS = 27437;
+  // 600 from the original CS400 songs.csv + 26,160 from songs-extra.csv + 668 from songs-recent.csv
+  private static final int TOTAL_SAMPLE_SONGS = 27428;
 
   @LocalServerPort
   private int port;
