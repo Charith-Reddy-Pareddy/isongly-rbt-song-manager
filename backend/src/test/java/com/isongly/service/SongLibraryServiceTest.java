@@ -198,29 +198,29 @@ class SongLibraryServiceTest {
   void searchMatchesTitleOrArtistCaseInsensitively() {
     SongLibraryService backend = new SongLibraryService(new SongTreePlaceholder());
     assertEquals(List.of("Cake By The Ocean"),
-        titlesOf(backend.search("cake", null, "title", "asc")));
+        titlesOf(backend.search(SearchCriteria.unbounded("cake", null, "title", "asc"))));
     assertEquals(List.of("Cake By The Ocean"),
-        titlesOf(backend.search("dnce", null, "title", "asc"))); // matches artist "DNCE"
+        titlesOf(backend.search(SearchCriteria.unbounded("dnce", null, "title", "asc")))); // matches artist "DNCE"
   }
 
   @Test
   void searchWithBlankQueryMatchesEverySong() {
     SongLibraryService backend = new SongLibraryService(new SongTreePlaceholder());
-    assertEquals(3, backend.search("", null, "title", "asc").size());
+    assertEquals(3, backend.search(SearchCriteria.unbounded("", null, "title", "asc")).size());
   }
 
   @Test
   void searchFiltersByExactGenreCaseInsensitively() {
     SongLibraryService backend = new SongLibraryService(new SongTreePlaceholder());
     assertEquals(Arrays.asList("BO$$", "Cake By The Ocean"),
-        titlesOf(backend.search("", "Dance Pop", "title", "asc")));
+        titlesOf(backend.search(SearchCriteria.unbounded("", "Dance Pop", "title", "asc"))));
   }
 
   @Test
   void searchSortsByRequestedFieldAndDirection() {
     SongLibraryService backend = new SongLibraryService(new SongTreePlaceholder());
     assertEquals(Arrays.asList("A L I E N S", "Cake By The Ocean", "BO$$"),
-        titlesOf(backend.search("", null, "bpm", "desc")));
+        titlesOf(backend.search(SearchCriteria.unbounded("", null, "bpm", "desc"))));
   }
 
   @Test
@@ -230,7 +230,39 @@ class SongLibraryServiceTest {
     SongLibraryService backend = new SongLibraryService(new SongTreePlaceholder());
     backend.getRange(140, 150);
     backend.setFilter(2020);
-    assertEquals(3, backend.search("", null, "title", "asc").size());
+    assertEquals(3, backend.search(SearchCriteria.unbounded("", null, "title", "asc")).size());
+  }
+
+  @Test
+  void searchFiltersByYearRange() {
+    SongLibraryService backend = new SongLibraryService(new SongTreePlaceholder());
+    SearchCriteria criteria = new SearchCriteria("", null, 2016, null, null, null, null, null, "title", "asc");
+    // excludes "BO$$" (2015); keeps "A L I E N S" (2017) and "Cake By The Ocean" (2016)
+    assertEquals(Arrays.asList("A L I E N S", "Cake By The Ocean"), titlesOf(backend.search(criteria)));
+  }
+
+  @Test
+  void searchFiltersByBpmRange() {
+    SongLibraryService backend = new SongLibraryService(new SongTreePlaceholder());
+    SearchCriteria criteria = new SearchCriteria("", null, null, null, 110, 130, null, null, "title", "asc");
+    // only "Cake By The Ocean" (119 bpm) falls in [110, 130]
+    assertEquals(List.of("Cake By The Ocean"), titlesOf(backend.search(criteria)));
+  }
+
+  @Test
+  void searchFiltersByEnergyRange() {
+    SongLibraryService backend = new SongLibraryService(new SongTreePlaceholder());
+    SearchCriteria criteria = new SearchCriteria("", null, null, null, null, null, 80, null, "title", "asc");
+    // excludes "Cake By The Ocean" (energy 75); keeps the two with energy >= 80
+    assertEquals(Arrays.asList("A L I E N S", "BO$$"), titlesOf(backend.search(criteria)));
+  }
+
+  @Test
+  void searchCombinesYearBpmAndEnergyFiltersWithAndSemantics() {
+    SongLibraryService backend = new SongLibraryService(new SongTreePlaceholder());
+    // year >= 2016 keeps ALIENS+Cake; bpm <= 120 further narrows to just Cake
+    SearchCriteria criteria = new SearchCriteria("", null, 2016, null, null, 120, null, null, "title", "asc");
+    assertEquals(List.of("Cake By The Ocean"), titlesOf(backend.search(criteria)));
   }
 
   @Test

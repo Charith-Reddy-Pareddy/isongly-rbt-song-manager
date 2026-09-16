@@ -96,6 +96,30 @@ class SongControllerIntegrationTest {
   }
 
   @Test
+  void searchFiltersByYearBpmAndEnergyRangesTogether() {
+    SongDto[] songs = restTemplate.getForObject(
+        url("/api/songs/search?minYear=2015&maxYear=2019&minBpm=100&maxBpm=130&minEnergy=60"),
+        SongDto[].class);
+
+    assertThat(songs).isNotEmpty();
+    for (SongDto song : songs) {
+      assertThat(song.year()).isBetween(2015, 2019);
+      assertThat(song.bpm()).isBetween(100, 130);
+      assertThat(song.energy()).isGreaterThanOrEqualTo(60);
+    }
+  }
+
+  @Test
+  void searchWithOnlyAMaxEnergyExcludesHigherEnergySongs() {
+    SongDto[] songs = restTemplate.getForObject(url("/api/songs/search?maxEnergy=10"), SongDto[].class);
+
+    assertThat(songs).isNotEmpty();
+    for (SongDto song : songs) {
+      assertThat(song.energy()).isLessThanOrEqualTo(10);
+    }
+  }
+
+  @Test
   @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
   void uploadingMalformedCsvReturns400AndPreservesTheExistingLibrary() {
     // Regression test: a failed upload used to clear the library before

@@ -21,7 +21,7 @@ describe('BrowsePanel', () => {
     await vi.advanceTimersByTimeAsync(300);
 
     expect(api.search).toHaveBeenCalledWith(
-      { q: '', genre: '', sortBy: 'title', sortDir: 'asc' },
+      expect.objectContaining({ q: '', genre: '', sortBy: 'title', sortDir: 'asc' }),
       expect.any(AbortSignal)
     );
     expect(await screen.findByText('Song A')).toBeInTheDocument();
@@ -102,7 +102,7 @@ describe('BrowsePanel', () => {
     await vi.advanceTimersByTimeAsync(300);
 
     expect(api.search).toHaveBeenCalledWith(
-      { q: 'bieber', genre: 'pop', sortBy: 'bpm', sortDir: 'desc' },
+      expect.objectContaining({ q: 'bieber', genre: 'pop', sortBy: 'bpm', sortDir: 'desc' }),
       expect.any(AbortSignal)
     );
     expect(screen.getByPlaceholderText(/search by title or artist/i)).toHaveValue('bieber');
@@ -120,6 +120,53 @@ describe('BrowsePanel', () => {
     expect(params.get('sortBy')).toBe('bpm');
     expect(params.has('sortDir')).toBe(false); // 'asc' is the default, omitted rather than written out
     expect(params.has('q')).toBe(false); // default/empty values are omitted, not written as ""
+  });
+
+  it('sends year/BPM/energy range filters to the search API', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime, delay: null });
+    render(<BrowsePanel />);
+    await vi.advanceTimersByTimeAsync(300);
+    api.search.mockClear();
+
+    await user.type(screen.getByLabelText(/minimum year/i), '2015');
+    await user.type(screen.getByLabelText(/maximum bpm/i), '130');
+    await vi.advanceTimersByTimeAsync(300);
+
+    expect(api.search).toHaveBeenLastCalledWith(
+      expect.objectContaining({ minYear: '2015', maxBpm: '130' }),
+      expect.any(AbortSignal)
+    );
+  });
+
+  it('shows a "clear ranges" button only once a range filter is set, and it resets all six fields', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime, delay: null });
+    render(<BrowsePanel />);
+    await vi.advanceTimersByTimeAsync(300);
+
+    expect(screen.queryByRole('button', { name: /clear ranges/i })).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText(/minimum energy/i), '50');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(screen.getByRole('button', { name: /clear ranges/i })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /clear ranges/i }));
+    await vi.advanceTimersByTimeAsync(300);
+
+    expect(screen.getByLabelText(/minimum energy/i)).toHaveValue(null);
+    expect(screen.queryByRole('button', { name: /clear ranges/i })).not.toBeInTheDocument();
+  });
+
+  it('initializes range filters from the URL on mount', async () => {
+    window.history.pushState({}, '', '/?minYear=2015&maxBpm=130');
+    render(<BrowsePanel />);
+    await vi.advanceTimersByTimeAsync(300);
+
+    expect(api.search).toHaveBeenCalledWith(
+      expect.objectContaining({ minYear: '2015', maxBpm: '130' }),
+      expect.any(AbortSignal)
+    );
+    expect(screen.getByLabelText(/minimum year/i)).toHaveValue(2015);
+    expect(screen.getByLabelText(/maximum bpm/i)).toHaveValue(130);
   });
 
   it('caps the rendered table at 300 rows and notes how many more matched, without under-counting the stat bar', async () => {

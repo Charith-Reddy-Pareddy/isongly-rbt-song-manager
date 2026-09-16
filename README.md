@@ -116,7 +116,7 @@ cd backend
 | POST   | `/api/songs/reset`       | clears the BPM range and year filter                               |
 | POST   | `/api/songs/upload`      | multipart CSV upload, replaces the loaded library                  |
 | POST   | `/api/songs/reload-sample` | discards whatever was uploaded and restores the bundled 26,760-song dataset |
-| GET    | `/api/songs/search`      | `?q=&genre=&sortBy=&sortDir=` — free-text search + sort, ignores range/filter state |
+| GET    | `/api/songs/search`      | `?q=&genre=&minYear=&maxYear=&minBpm=&maxBpm=&minEnergy=&maxEnergy=&sortBy=&sortDir=` — free-text search with independent year/BPM/energy range filters, ignores range/filter state |
 | GET    | `/api/songs/genres`      | every distinct genre in the loaded library, alphabetically         |
 | GET    | `/api/trending`          | a fixed Billboard Hot 100 chart-week snapshot (see below)          |
 

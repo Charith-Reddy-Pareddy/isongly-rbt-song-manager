@@ -276,34 +276,37 @@ public class SongLibraryService implements BackendInterface {
 
   /**
    * Free-text search over every loaded song's title/artist, optionally
-   * narrowed to one genre, sorted by the requested field. Unlike
-   * {@link #getRange}/{@link #setFilter}, this ignores the BPM range/year
-   * filter state entirely — it's a separate, stateless browsing query.
-   *
-   * @param query    case-insensitive substring matched against title or artist; blank/null matches everything
-   * @param genre    exact case-insensitive genre match, or null/blank for every genre
-   * @param sortBy   one of "title", "artist", "year", "bpm", "energy" (defaults to "title")
-   * @param sortDir  "asc" (default) or "desc"
+   * narrowed by genre and/or year/BPM/energy ranges, sorted by the requested
+   * field. Unlike {@link #getRange}/{@link #setFilter}, this ignores the BPM
+   * range/year filter state entirely — it's a separate, stateless browsing
+   * query with its own independent set of filters.
    */
-  public List<Song> search(String query, String genre, String sortBy, String sortDir) {
+  public List<Song> search(SearchCriteria criteria) {
     List<Song> results = new ArrayList<>();
     if (songCollection == null) {
       return results;
     }
-    String normalizedQuery = query == null ? "" : query.trim().toLowerCase();
-    String normalizedGenre = (genre == null || genre.isBlank()) ? null : genre.trim();
+    String normalizedQuery = criteria.query() == null ? "" : criteria.query().trim().toLowerCase();
+    String normalizedGenre = (criteria.genre() == null || criteria.genre().isBlank()) ? null : criteria.genre().trim();
 
     for (Song song : songCollection) {
       boolean matchesQuery = normalizedQuery.isEmpty()
           || song.getTitle().toLowerCase().contains(normalizedQuery)
           || song.getArtist().toLowerCase().contains(normalizedQuery);
       boolean matchesGenre = normalizedGenre == null || normalizedGenre.equalsIgnoreCase(song.getGenre());
-      if (matchesQuery && matchesGenre) {
+      boolean matchesYear = withinBounds(song.getYear(), criteria.minYear(), criteria.maxYear());
+      boolean matchesBpm = withinBounds(song.getBPM(), criteria.minBpm(), criteria.maxBpm());
+      boolean matchesEnergy = withinBounds(song.getEnergy(), criteria.minEnergy(), criteria.maxEnergy());
+      if (matchesQuery && matchesGenre && matchesYear && matchesBpm && matchesEnergy) {
         results.add(song);
       }
     }
-    results.sort(sortComparator(sortBy, sortDir));
+    results.sort(sortComparator(criteria.sortBy(), criteria.sortDir()));
     return results;
+  }
+
+  private boolean withinBounds(int value, Integer min, Integer max) {
+    return (min == null || value >= min) && (max == null || value <= max);
   }
 
   /** Every distinct genre among loaded songs, alphabetically, case-insensitively de-duplicated. */

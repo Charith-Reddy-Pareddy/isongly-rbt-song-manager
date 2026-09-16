@@ -39,10 +39,25 @@ export function reloadSampleData() {
   return fetch(`${BASE_URL}/api/songs/reload-sample`, { method: 'POST' }).then(handle);
 }
 
-export function search({ q = '', genre = '', sortBy = 'title', sortDir = 'asc' } = {}, signal) {
+export function search(
+  {
+    q = '', genre = '',
+    minYear = '', maxYear = '',
+    minBpm = '', maxBpm = '',
+    minEnergy = '', maxEnergy = '',
+    sortBy = 'title', sortDir = 'asc',
+  } = {},
+  signal
+) {
   const params = new URLSearchParams({ sortBy, sortDir });
   if (q) params.set('q', q);
   if (genre) params.set('genre', genre);
+  if (minYear !== '') params.set('minYear', minYear);
+  if (maxYear !== '') params.set('maxYear', maxYear);
+  if (minBpm !== '') params.set('minBpm', minBpm);
+  if (maxBpm !== '') params.set('maxBpm', maxBpm);
+  if (minEnergy !== '') params.set('minEnergy', minEnergy);
+  if (maxEnergy !== '') params.set('maxEnergy', maxEnergy);
   return fetch(`${BASE_URL}/api/songs/search?${params}`, { signal }).then(handle);
 }
 

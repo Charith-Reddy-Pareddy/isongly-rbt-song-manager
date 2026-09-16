@@ -1,5 +1,6 @@
 package com.isongly.web;
 
+import com.isongly.service.SearchCriteria;
 import com.isongly.service.SongLibraryService;
 import com.isongly.web.dto.SongDto;
 
@@ -56,14 +57,26 @@ public class SongController {
     return songLibraryService.topFiveSongs().stream().map(SongDto::from).toList();
   }
 
-  /** Free-text search over title/artist, optionally narrowed by genre and sorted — independent of range/filter state. */
+  /**
+   * Free-text search over title/artist, optionally narrowed by genre and by
+   * year/BPM/energy ranges (each bound independently optional), sorted —
+   * independent of the range/filter state used by /range, /filter, /top-five.
+   */
   @GetMapping("/search")
   public List<SongDto> search(
       @RequestParam(required = false, defaultValue = "") String q,
       @RequestParam(required = false) String genre,
+      @RequestParam(required = false) Integer minYear,
+      @RequestParam(required = false) Integer maxYear,
+      @RequestParam(required = false) Integer minBpm,
+      @RequestParam(required = false) Integer maxBpm,
+      @RequestParam(required = false) Integer minEnergy,
+      @RequestParam(required = false) Integer maxEnergy,
       @RequestParam(required = false, defaultValue = "title") String sortBy,
       @RequestParam(required = false, defaultValue = "asc") String sortDir) {
-    return songLibraryService.search(q, genre, sortBy, sortDir).stream().map(SongDto::from).toList();
+    SearchCriteria criteria = new SearchCriteria(
+        q, genre, minYear, maxYear, minBpm, maxBpm, minEnergy, maxEnergy, sortBy, sortDir);
+    return songLibraryService.search(criteria).stream().map(SongDto::from).toList();
   }
 
   /** Every distinct genre among the currently loaded songs, for populating a filter dropdown. */

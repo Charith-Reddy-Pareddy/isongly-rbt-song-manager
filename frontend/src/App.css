@@ -69,6 +69,38 @@
   flex: 1;
 }
 
+.range-filters {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.range-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.range-filter-inputs {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.range-filter-inputs input {
+  width: 5.5rem;
+}
+
+.range-filter-clear {
+  flex: none;
+  align-self: flex-end;
+}
+
 .stat-bar {
   display: flex;
   gap: 1.5rem;
@@ -384,6 +416,15 @@ tr.details-row td {
 @media (max-width: 560px) {
   .browse-controls {
     flex-direction: column;
+  }
+
+  .range-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .range-filter-clear {
+    align-self: stretch;
   }
 
   .stat-bar {
