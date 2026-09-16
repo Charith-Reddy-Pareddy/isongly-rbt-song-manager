@@ -68,3 +68,7 @@ export function getGenres() {
 export function getTrending() {
   return fetch(`${BASE_URL}/api/trending`).then(handle);
 }
+
+export function getRecentHits() {
+  return fetch(`${BASE_URL}/api/recent-hits`).then(handle);
+}

@@ -19,6 +19,10 @@ const sampleResponse = {
 describe('TrendingPanel', () => {
   beforeEach(() => {
     api.getTrending.mockResolvedValue(sampleResponse);
+    // RecentHitsPanel renders alongside TrendingPanel's own chart; give it an
+    // empty (but resolved) response so it doesn't interfere with assertions
+    // about the Hot 100 table above it.
+    api.getRecentHits.mockResolvedValue({ source: 'Billboard Hot 100', entries: [] });
   });
 
   it('loads and shows the chart week and every entry', async () => {
@@ -27,7 +31,8 @@ describe('TrendingPanel', () => {
     expect(await screen.findByText(/chart week of 2026-09-19/i)).toBeInTheDocument();
     expect(screen.getByText("Choosin' Texas")).toBeInTheDocument();
     expect(screen.getByText('Ella Langley')).toBeInTheDocument();
-    expect(screen.getAllByRole('row')).toHaveLength(5); // header + 4 entries
+    // Hot 100 table: header + 4 entries, plus RecentHitsPanel's own (empty) header row
+    expect(await screen.findAllByRole('row')).toHaveLength(6);
   });
 
   it('shows the source attribution', async () => {

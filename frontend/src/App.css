@@ -242,6 +242,23 @@ button.secondary:hover {
   padding: 1.25rem;
 }
 
+.recent-hits {
+  margin-top: 1.75rem;
+}
+
+.recent-hits-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.recent-hits-intro {
+  margin: 0 0 1.25rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  max-width: 720px;
+}
+
 .results-header {
   display: flex;
   align-items: center;

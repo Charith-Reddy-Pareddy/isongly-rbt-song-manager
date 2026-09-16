@@ -1,6 +1,7 @@
 package com.isongly.web;
 
 import com.isongly.model.Song;
+import com.isongly.service.RecentHitsService;
 import com.isongly.service.SongLibraryService;
 import com.isongly.service.TrendingChartService;
 import com.isongly.tree.IterableRedBlackTree;
@@ -65,6 +66,20 @@ public class IsonglyApplication {
       @Value("classpath:trending.csv") Resource trendingData) throws IOException {
     try (var reader = new InputStreamReader(trendingData.getInputStream(), StandardCharsets.UTF_8)) {
       return new TrendingChartService(reader, "2026-09-19");
+    }
+  }
+
+  /**
+   * Archive of songs that reached the Billboard Hot 100 top 20 at some
+   * point between 2021 and 2026, filling the gap left by the main song
+   * library (which tops out around 2020) since a real dataset with full
+   * audio features for 2021+ songs isn't freely available (see README).
+   */
+  @Bean
+  public RecentHitsService recentHitsService(
+      @Value("classpath:recent-hits.csv") Resource recentHitsData) throws IOException {
+    try (var reader = new InputStreamReader(recentHitsData.getInputStream(), StandardCharsets.UTF_8)) {
+      return new RecentHitsService(reader);
     }
   }
 
