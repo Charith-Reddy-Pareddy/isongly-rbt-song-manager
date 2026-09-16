@@ -121,4 +121,18 @@ describe('BrowsePanel', () => {
     expect(params.has('sortDir')).toBe(false); // 'asc' is the default, omitted rather than written out
     expect(params.has('q')).toBe(false); // default/empty values are omitted, not written as ""
   });
+
+  it('caps the rendered table at 300 rows and notes how many more matched, without under-counting the stat bar', async () => {
+    const manyMatches = Array.from({ length: 1200 }, (_, i) => ({
+      title: `Song ${i}`, artist: 'Artist', genre: 'pop', year: 2020, bpm: 120, energy: 80,
+    }));
+    api.search.mockResolvedValue(manyMatches);
+
+    render(<BrowsePanel />);
+    await vi.advanceTimersByTimeAsync(300);
+
+    expect(await screen.findByText(/showing the first 300 of 1200 matches/i)).toBeInTheDocument();
+    expect(screen.getByText('1200')).toBeInTheDocument(); // stat bar's total count is the full match count
+    expect(screen.getAllByRole('row')).toHaveLength(301); // header + 300 rows, not 1200
+  });
 });

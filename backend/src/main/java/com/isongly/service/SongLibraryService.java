@@ -68,15 +68,19 @@ public class SongLibraryService implements BackendInterface {
   }
 
   /**
-   * Replaces the entire library with the songs parsed from source. Unlike
-   * {@link #readData(Reader)}, this is atomic: the CSV is fully parsed and
-   * validated before anything is cleared, so a malformed upload leaves the
-   * previously loaded library untouched instead of wiping it out.
+   * Replaces the entire library with the songs parsed from one or more
+   * sources. Unlike {@link #readData(Reader)}, this is atomic: every CSV is
+   * fully parsed and validated before anything is cleared, so a malformed
+   * source leaves the previously loaded library untouched instead of wiping
+   * it out partway through.
    *
-   * @throws IOException if the CSV can't be parsed; the existing library is left unchanged
+   * @throws IOException if any source can't be parsed; the existing library is left unchanged
    */
-  public void replaceData(Reader source) throws IOException {
-    List<Song> songs = parseSongs(source);
+  public void replaceData(Reader... sources) throws IOException {
+    List<Song> songs = new ArrayList<>();
+    for (Reader source : sources) {
+      songs.addAll(parseSongs(source));
+    }
     clear();
     for (Song song : songs) {
       songCollection.insert(song);

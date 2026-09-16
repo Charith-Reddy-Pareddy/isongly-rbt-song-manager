@@ -32,18 +32,28 @@ public class IsonglyApplication {
     return new SongLibraryService(tree);
   }
 
-  /** Loads the bundled sample dataset into the tree once on startup. */
+  /**
+   * Loads the bundled sample datasets into the tree once on startup: the
+   * original 600-song CS400 CSV, plus a larger, deduplicated extract of the
+   * CC0-licensed TidyTuesday Spotify Songs dataset (~26k more real songs,
+   * same 14-column schema, so it parses with no code changes).
+   */
   @Bean
   public CommandLineRunner loadSampleData(
       SongLibraryService songLibraryService,
-      @Value("classpath:songs.csv") Resource sampleData) {
-    return args -> {
-      try (var reader = new InputStreamReader(sampleData.getInputStream(), StandardCharsets.UTF_8)) {
+      @Value("classpath:songs.csv") Resource sampleData,
+      @Value("classpath:songs-extra.csv") Resource extraSampleData) {
+    return args -> loadSampleDatasets(songLibraryService, sampleData, extraSampleData);
+  }
+
+  private void loadSampleDatasets(SongLibraryService songLibraryService, Resource... datasets) {
+    for (Resource dataset : datasets) {
+      try (var reader = new InputStreamReader(dataset.getInputStream(), StandardCharsets.UTF_8)) {
         songLibraryService.readData(reader);
       } catch (IOException e) {
-        System.err.println("Could not load bundled sample dataset: " + e.getMessage());
+        System.err.println("Could not load bundled dataset " + dataset.getFilename() + ": " + e.getMessage());
       }
-    };
+    }
   }
 
   /**

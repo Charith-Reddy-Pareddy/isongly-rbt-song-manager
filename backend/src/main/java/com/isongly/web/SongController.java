@@ -25,12 +25,15 @@ public class SongController {
 
   private final SongLibraryService songLibraryService;
   private final Resource sampleData;
+  private final Resource extraSampleData;
 
   public SongController(
       SongLibraryService songLibraryService,
-      @Value("classpath:songs.csv") Resource sampleData) {
+      @Value("classpath:songs.csv") Resource sampleData,
+      @Value("classpath:songs-extra.csv") Resource extraSampleData) {
     this.songLibraryService = songLibraryService;
     this.sampleData = sampleData;
+    this.extraSampleData = extraSampleData;
   }
 
   /** [G]et songs by Speed: titles ordered by BPM within [min, max] (either bound optional). */
@@ -93,14 +96,15 @@ public class SongController {
   }
 
   /**
-   * Restores the bundled sample dataset, discarding whatever was loaded by a
-   * previous upload. Without this, there was no way back to the original
-   * 600-song dataset short of restarting the server.
+   * Restores the bundled sample datasets, discarding whatever was loaded by
+   * a previous upload. Without this, there was no way back to the original
+   * dataset short of restarting the server.
    */
   @PostMapping("/reload-sample")
   public ResponseEntity<?> reloadSample() {
-    try (var reader = new InputStreamReader(sampleData.getInputStream(), StandardCharsets.UTF_8)) {
-      songLibraryService.replaceData(reader);
+    try (var reader = new InputStreamReader(sampleData.getInputStream(), StandardCharsets.UTF_8);
+         var extraReader = new InputStreamReader(extraSampleData.getInputStream(), StandardCharsets.UTF_8)) {
+      songLibraryService.replaceData(reader, extraReader);
       return ResponseEntity.ok(
           songLibraryService.getRangeAsSongs(null, null).stream().map(SongDto::from).toList());
     } catch (IOException e) {

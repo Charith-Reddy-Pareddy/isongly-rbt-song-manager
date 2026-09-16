@@ -60,10 +60,11 @@ isongly-rbt-song-manager/
 │   ├── src/main/java/com/isongly/
 │   │   ├── model/    Song
 │   │   ├── tree/     BSTNode, BinarySearchTree, BSTRotation, RedBlackTree, IterableRedBlackTree
-│   │   ├── service/  BackendInterface, SongLibraryService
+│   │   ├── service/  BackendInterface, SongLibraryService, TrendingChartService
 │   │   ├── cli/      FrontendInterface, ConsoleFrontend, IsonglyCli (console entry point)
-│   │   └── web/      IsonglyApplication (Spring Boot entry point), SongController, dto/SongDto
-│   ├── src/main/resources/songs.csv   bundled sample dataset (600 songs)
+│   │   └── web/      IsonglyApplication (Spring Boot entry point), SongController, TrendingController, dto/
+│   ├── src/main/resources/songs.csv, songs-extra.csv   bundled song library (26,760 songs total)
+│   ├── src/main/resources/trending.csv                 bundled Billboard Hot 100 snapshot (see below)
 │   └── src/test/java/...              JUnit 5 tests (tree, service, CLI, REST)
 └── frontend/    React + Vite
     └── src/
@@ -114,10 +115,20 @@ cd backend
 | GET    | `/api/songs/top-five`    | up to five most energetic songs in the current range/filter        |
 | POST   | `/api/songs/reset`       | clears the BPM range and year filter                               |
 | POST   | `/api/songs/upload`      | multipart CSV upload, replaces the loaded library                  |
-| POST   | `/api/songs/reload-sample` | discards whatever was uploaded and restores the bundled 600-song dataset |
+| POST   | `/api/songs/reload-sample` | discards whatever was uploaded and restores the bundled 26,760-song dataset |
 | GET    | `/api/songs/search`      | `?q=&genre=&sortBy=&sortDir=` — free-text search + sort, ignores range/filter state |
 | GET    | `/api/songs/genres`      | every distinct genre in the loaded library, alphabetically         |
 | GET    | `/api/trending`          | a fixed Billboard Hot 100 chart-week snapshot (see below)          |
+
+### Song library data
+
+The library loads two bundled CSVs at startup, both in the same 14-column schema so they parse with no code changes:
+- **`songs.csv`** — the original 600-song CS400 dataset (2010–2019).
+- **`songs-extra.csv`** — 26,160 deduplicated songs from the CC0-licensed [TidyTuesday Spotify Songs dataset](https://github.com/rfordatascience/tidytuesday/tree/main/data/2020/2020-01-21) (spans 1957–early 2020), added to broaden genre and era coverage.
+
+Genuinely current (2023+) song data with full audio features (BPM, energy, danceability, etc.) isn't freely available the way it used to be — Spotify locked down its audio-features API for new developer apps in late 2024, so recent public datasets either omit audio features, omit release dates, or (in at least one case checked) turned out to be synthetic data presented as real, which was rejected rather than bundled. The **Trending** tab below covers genuinely current data instead, just without audio features. Because the two song datasets were collected independently, a small number of songs (mostly from artists active right at the 2019–2020 boundary) appear once from each source with slightly different computed values — this is normal, honest overlap between two real datasets, not a duplicate-insertion bug.
+
+The frontend's Browse & Search table renders at most 300 rows at a time (with a note when a search matches more) to keep the DOM responsive at this size; the stat bar and match count always reflect the full result set.
 
 ### Trending tab
 

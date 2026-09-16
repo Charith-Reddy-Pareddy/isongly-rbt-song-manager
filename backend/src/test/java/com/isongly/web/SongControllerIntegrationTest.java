@@ -22,6 +22,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class SongControllerIntegrationTest {
 
+  // 600 from the original CS400 songs.csv + 26,160 deduplicated from the merged songs-extra.csv
+  private static final int TOTAL_SAMPLE_SONGS = 26760;
+
   @LocalServerPort
   private int port;
 
@@ -67,7 +70,7 @@ class SongControllerIntegrationTest {
   void resetClearsRangeAndFilterAndReturnsEveryLoadedSong() {
     restTemplate.getForObject(url("/api/songs/range?min=100&max=110"), SongDto[].class);
     SongDto[] songs = restTemplate.postForObject(url("/api/songs/reset"), null, SongDto[].class);
-    assertThat(songs.length).isEqualTo(600);
+    assertThat(songs.length).isEqualTo(TOTAL_SAMPLE_SONGS);
   }
 
   @Test
@@ -86,7 +89,7 @@ class SongControllerIntegrationTest {
   void searchSortsByRequestedFieldDescending() {
     SongDto[] songs = restTemplate.getForObject(url("/api/songs/search?sortBy=bpm&sortDir=desc"), SongDto[].class);
 
-    assertThat(songs.length).isEqualTo(600);
+    assertThat(songs.length).isEqualTo(TOTAL_SAMPLE_SONGS);
     for (int i = 1; i < songs.length; i++) {
       assertThat(songs[i - 1].bpm()).isGreaterThanOrEqualTo(songs[i].bpm());
     }
@@ -96,7 +99,7 @@ class SongControllerIntegrationTest {
   @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
   void uploadingMalformedCsvReturns400AndPreservesTheExistingLibrary() {
     // Regression test: a failed upload used to clear the library before
-    // parsing the replacement CSV, wiping out all 600 bundled songs.
+    // parsing the replacement CSV, wiping out every bundled song.
     // @DirtiesContext resets the shared bean afterward so this destructive
     // test can't affect the other tests in this class.
     String malformedCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live,val,dur,acous,spch,pop\nOnly Title,Only Artist\n";
@@ -115,15 +118,15 @@ class SongControllerIntegrationTest {
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
     SongDto[] songs = restTemplate.getForObject(url("/api/songs/search"), SongDto[].class);
-    assertThat(songs.length).isEqualTo(600);
+    assertThat(songs.length).isEqualTo(TOTAL_SAMPLE_SONGS);
   }
 
   @Test
   @DirtiesContext(methodMode = DirtiesContext.MethodMode.AFTER_METHOD)
   void reloadSampleRestoresTheOriginalDatasetAfterAnUpload() {
     // Regression test: uploading a replacement CSV used to be a one-way
-    // door -- there was no way back to the bundled 600-song dataset short
-    // of restarting the whole server.
+    // door -- there was no way back to the bundled dataset short of
+    // restarting the whole server.
     String replacementCsv = "title,artist,top genre,year,bpm,nrgy,dnce,dB,live,val,dur,acous,spch,pop\n"
         + "Only Song,Only Artist,pop,2020,120,80,60,-5,10,70,200,5,4,60\n";
 
@@ -142,7 +145,7 @@ class SongControllerIntegrationTest {
     assertThat(afterUpload.length).isEqualTo(1);
 
     SongDto[] afterReload = restTemplate.postForObject(url("/api/songs/reload-sample"), null, SongDto[].class);
-    assertThat(afterReload.length).isEqualTo(600);
+    assertThat(afterReload.length).isEqualTo(TOTAL_SAMPLE_SONGS);
   }
 
   @Test

@@ -5,6 +5,11 @@ import StatBar from './StatBar';
 
 const VALID_SORT_COLUMNS = new Set(['title', 'artist', 'genre', 'year', 'bpm', 'energy']);
 
+// The library now spans ~27k songs; rendering every match as its own table
+// row would bog down the DOM, so only the first page renders and a note
+// tells you to narrow the search for the rest.
+const MAX_DISPLAY_ROWS = 300;
+
 function readInitialState() {
   const params = new URLSearchParams(window.location.search);
   const sortBy = params.get('sortBy');
@@ -124,7 +129,13 @@ export default function BrowsePanel() {
         ) : (
           <>
             <StatBar songs={songs} />
-            <SongTable songs={songs} sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />
+            <SongTable songs={songs.slice(0, MAX_DISPLAY_ROWS)} sortBy={sortBy} sortDir={sortDir} onSort={handleSort} />
+            {songs.length > MAX_DISPLAY_ROWS && (
+              <p className="truncation-note">
+                Showing the first {MAX_DISPLAY_ROWS} of {songs.length} matches — narrow your search or
+                pick a genre to see more.
+              </p>
+            )}
           </>
         )}
       </section>
